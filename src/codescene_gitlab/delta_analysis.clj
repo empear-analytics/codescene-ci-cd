@@ -4,17 +4,18 @@
             [clojure.string :as string]
             [clojure.java.shell :as shell]))
 
-(defn- commit-range [from-commit to-commit]
+(defn- commit-range [from-commit to-commit listener]
   [from-commit to-commit]
+  (listener (format "Get commits from %s to %s..." from-commit to-commit))
   (->> (shell/sh "git" "log" "--pretty='%H'" (format "%s..%s" from-commit to-commit))
        :out
        (#(string/split % #"\n"))
        (map #(string/replace % #"['\"]" ""))))
 
 (defn- run-delta-analyses-on-commits [config commits listener]
-  (let [{:keys [url user password repository coupling-threshold-percent]} config]
+  (let [{:keys [delta-analysis-url user password repository coupling-threshold-percent]} config]
     (listener (format "Running delta analysis on commits (%s) in repository %s." (string/join "," commits) repository))
-    (-> (http/post url
+    (-> (http/post delta-analysis-url
                    {:basic-auth   [user password]
                     :content-type :json
                     :form-params  {:commits                    commits
@@ -40,8 +41,8 @@
 
 (defn- print-result [entries config title show-commits listener]
   (listener (format "\n%s" title))
-  (let [{:keys [risk-threshold url]} config
-        {:keys [protocol host port]} (url-parts url)]
+  (let [{:keys [risk-threshold delta-analysis-url]} config
+        {:keys [protocol host port]} (url-parts delta-analysis-url)]
     (doseq [entry entries]
       (let [{:keys [title view result commits]} entry
             {:keys [risk description warnings quality-gates]} result
@@ -80,22 +81,21 @@
       entry)))
 
 (defn- mark-as-unstable-when-at-risk-threshold [entry config listener]
-  (let [{:keys [mark-build-as-unstable risk-threshold]} config
+  (let [{:keys [fail-on-high-risk risk-threshold]} config
         risk (get-in entry [:result :risk])]
-    (if (and mark-build-as-unstable (>= risk risk-threshold))
+    (if (and fail-on-high-risk (>= risk risk-threshold))
       (do
         (listener (format "Delta analysis result with risk %d: hits the risk threshold (%d). Marking build as unstable."
                           risk risk-threshold))
         (mark-as-unstable entry))
       entry)))
 
-(defn analyze-latest-individual-commit-for
-  [{:keys [previous-commit
-           current-commit
-           base-revision
-           branch] :as config}
-   listener]
-  (let [commits (commit-range previous-commit current-commit)]
+(defn analyze-latest-individual-commit-for [config listener]
+  (let [{:keys [previous-commit
+                 current-commit
+                 base-revision
+                 branch]} config
+         commits (commit-range previous-commit current-commit listener)]
     (if (seq commits)
       (->> (run-delta-analyses-on-individual-commits config commits listener)
           (map #(mark-as-unstable-when-failed-goal % config listener))
@@ -110,7 +110,7 @@
            base-revision
            branch] :as config}
    listener]
-  (let [commits (commit-range base-revision current-commit)]
+  (let [commits (commit-range base-revision current-commit listener)]
     (if (seq commits)
       (-> (run-delta-analyses-on-branch-diff config commits branch listener)
           (map #(mark-as-unstable-when-failed-goal % config listener))

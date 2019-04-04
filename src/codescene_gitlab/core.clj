@@ -9,29 +9,32 @@
 
 (def ^:private cli-options
   [["-h" "--help"]
-   [nil "--url URL" "Project Delta Analysis URL" :default "http://localhost:3005/projects/1/delta-analysis"]
-   ["-u" "--user USER" "CodeScene User" :default "bot"]
-   ["-p" "--password PWD" "CodeScene Password" :default "0bca8fd9-c137-47c7-9c2b-98f6fbc2cd1c"]
-   ["-r" "--repository REPO" "Repository" :default "cmake-project-template"]
-   [nil "--use-biomarkers" "Use Biomarkers" :default true]
-   [nil "--pass-on-failed-analysis" "Build Success on Failed Analysis" :default true]
-   [nil "--mark-build-as-unstable" "Mark as Unstable on High Risk" :default true]
-   [nil "--fail-on-failed-goal" "Mark Build as Unstable on Failed Goals" :default true]
-   [nil "--fail-on-declining-code-health" "Mark Build as Unstable on Code Health Decline" :default true]
-   [nil "--coupling-threshold-percent" "Temporal Coupling Threshold (in percent)" :default 75]
-   [nil "--risk-threshold" nil :default 9]
-   [nil "--previous-commit" nil :default "aa39b593"]
-   [nil "--current-commit" :default "c8c5f971"]
-   [nil "--branch" nil :default "master"]
-   [nil "--analyze-latest-individually" "Individual Commits" :default true]
+   ;; Codescene access settings
+   [nil "--delta-analysis-url URL" "Project Delta Analysis URL"]
+   ["-u" "--user USER" "CodeScene User"]
+   ["-p" "--password PWD" "CodeScene Password"]
+   ["-r" "--repository REPO" "Repository"]
+   ;; Flags
+   [nil "--analyze-latest-individually" "Individual Commits" :default false]
    [nil "--analyze-branch-diff" "By Branch" :default false]
-   [nil "--gitlab-url" "GitLab URL" :default nil]
-   [nil "--project-id" "GitLab Project ID" :default nil]
-   [nil "--api-token" "GitLab API Token" :default nil]
-   [nil "--merge-request-iid" "GitLab Merge Request IID" :default nil]
-   [nil "--create-gitlab-note" "By Branch" :default false]
-   [nil "--base-revision" nil :default "aa39b593"]
-   [nil "--html-dir" "Path where html output is generated" :default nil]])
+   [nil "--use-biomarkers" "Use Biomarkers" :default false]
+   [nil "--pass-on-failed-analysis" "Build Success on Failed Analysis" :default false]
+   [nil "--fail-on-high-risk" "Mark as Unstable on High Risk" :default false]
+   [nil "--fail-on-failed-goal" "Mark Build as Unstable on Failed Goals" :default false]
+   [nil "--fail-on-declining-code-health" "Mark Build as Unstable on Code Health Decline" :default false]
+   [nil "--create-gitlab-note" "Create Note For Gitlab Merge Request" :default false]
+   ;; Arguments
+   [nil "--coupling-threshold-percent THRESHOLD" "Temporal Coupling Threshold (in percent)" :default 75 :parse-fn #(Integer/parseInt %)]
+   [nil "--risk-threshold THRESHOLD" "Risk Threshold" :default 9 :parse-fn #(Integer/parseInt %)]
+   [nil "--previous-commit SHA" "Previous Commit Id"]
+   [nil "--current-commit SHA" "Current Commit Id"]
+   [nil "--base-revision SHA" "Base Revision Id"]
+   [nil "--branch BRANCH" "Branch to analyze" :default "master"]
+   [nil "--gitlab-url URL" "GitLab URL"]
+   [nil "--api-token TOKEN" "GitLab API Token"]
+   [nil "--project-id ID" "GitLab Project ID" :parse-fn #(Integer/parseInt %)]
+   [nil "--merge-request-iid IID" "GitLab Merge Request IID" :parse-fn #(Integer/parseInt %)]
+   [nil "--html-dir DIR" "Path where html output is generated"]])
 
 (defn- usage [options-summary]
   (->> ["Usage: codescene-gitlab [options]"
@@ -43,12 +46,38 @@
   (str "The following errors occurred while parsing your command:\n\n"
        (string/join \newline errors)))
 
+(defn- validation-error-msg [errors]
+  (str "The following validation errors occurred for your command:\n\n"
+       (string/join \newline errors)))
+
 (defn- exit [success? msg]
   (println success? msg)
   (System/exit (if success? 0 1)))
 
 (defn- validate-options [options]
-  true)
+  (let [{:keys [analyze-latest-individually analyze-branch-diff create-gitlab-note
+                delta-analysis-url user password repository
+                previous-commit current-commit base-revision
+                gitlab-url api-token project-id merge-request-iid]} options]
+    (filter
+      some?
+      (concat
+        (when-not (some? delta-analysis-url) ["Delta analysis URL not specified"])
+        (when-not (some? user) ["Codescene user not specified"])
+        (when-not (some? password) ["Codescene password not specified"])
+        (when-not (some? repository) ["Codescene repository not specified"])
+        (when analyze-latest-individually
+          [(when-not (some? current-commit) "Current commit not specified")
+           (when-not (some? previous-commit) "Previous commit not specified")])
+        (when analyze-branch-diff
+          ;; TODO: Don't report this twice...
+          [(when-not (some? current-commit) "Current commit not specified")
+           (when-not (some? base-revision) "Base revision not specified")])
+        (when create-gitlab-note
+          [(when-not (some? gitlab-url) "GitLab URL not specified")
+           (when-not (some? api-token) "API token not specified")
+           (when-not (some? project-id) "Project Id not specified")
+           (when-not (some? merge-request-iid) "Merge request IID not specified")])))))
 
 (defn parse-args
   [args]
@@ -58,18 +87,20 @@
       (:help options) {:exit-message (usage summary) :ok? true}
       ;; errors => exit with description of errors
       errors {:exit-message (error-msg errors)}
-      ;; custom validation on arguments
-      (validate-options options) {:options options}
-      ;; failed custom validation => exit with usage summary
-      :else {:exit-message (usage summary)})))
+      :else (let [validation-errors (validate-options options)]
+              (if (seq validation-errors)
+                ;; failed custom validation => exit with usage summary
+                {:exit-message (validation-error-msg validation-errors)}
+                ;; success => exit with options
+                {:options options})))))
 
 (defn run-analysis [options listener]
   (let [{:keys [analyze-latest-individually analyze-branch-diff previous-commit base-revision]} options]
     (concat
-     (when (and analyze-latest-individually (some? previous-commit))
-       (delta-analysis/analyze-latest-individual-commit-for options listener))
-     (when (and analyze-branch-diff (some? base-revision))
-       (delta-analysis/analyze-work-on-branch-for options listener)))))
+      (when (and analyze-latest-individually (some? previous-commit))
+        (delta-analysis/analyze-latest-individual-commit-for options listener))
+      (when (and analyze-branch-diff (some? base-revision))
+        (delta-analysis/analyze-work-on-branch-for options listener)))))
 
 (defn create-gitlab-note [options results]
   (let [{:keys [gitlab-url api-token project-id merge-request-iid]} options]

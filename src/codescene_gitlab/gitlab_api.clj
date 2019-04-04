@@ -38,3 +38,9 @@
                    {:headers      (header-with-pat api-token)
                     :query-params {:body text}
                     :as           :json})))
+
+
+(comment
+  (get-merge-request-notes "http://localhost:8082/api/v4" "Q9nE8fxxs5xymf-koUD-" 4 1)
+  (create-merge-request-note "http://localhost:8082/api/v4" "Q9nE8fxxs5xymf-koUD-" 4 1 "Bla bla bla")
+  (delete-merge-request-note "http://localhost:8082/api/v4" "Q9nE8fxxs5xymf-koUD-" 4 1 10))

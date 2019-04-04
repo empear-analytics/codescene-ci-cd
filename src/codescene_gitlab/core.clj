@@ -1,8 +1,10 @@
 (ns codescene-gitlab.core
+  "Contains the entrypoint to the app, including argument parsing and validation"
   (:require [clojure.string :as string]
             [clojure.tools.cli :as cli]
             [codescene-gitlab.delta-analysis :as delta-analysis]
-            [codescene-gitlab.gitlab-api :as gitlab])
+            [codescene-gitlab.gitlab-api :as gitlab]
+            [codescene-gitlab.results :as results])
   (:gen-class)
   ;;(:import (codescene_gitlab RemoteAnalysisException))
   )
@@ -15,7 +17,7 @@
    ["-p" "--password PWD" "CodeScene Password"]
    ["-r" "--repository REPO" "Repository"]
    ;; Flags
-   [nil "--analyze-latest-individually" "Individual Commits" :default false]
+   [nil "--analyze-individual-commits" "Individual Commits" :default false]
    [nil "--analyze-branch-diff" "By Branch" :default false]
    [nil "--use-biomarkers" "Use Biomarkers" :default false]
    [nil "--pass-on-failed-analysis" "Build Success on Failed Analysis" :default false]
@@ -55,7 +57,7 @@
   (System/exit (if success? 0 1)))
 
 (defn- validate-options [options]
-  (let [{:keys [analyze-latest-individually analyze-branch-diff create-gitlab-note
+  (let [{:keys [analyze-individual-commits analyze-branch-diff create-gitlab-note
                 delta-analysis-url user password repository
                 previous-commit current-commit base-revision
                 gitlab-api-url api-token project-id merge-request-iid]} options]
@@ -66,7 +68,7 @@
         (when-not (some? user) ["Codescene user not specified"])
         (when-not (some? password) ["Codescene password not specified"])
         (when-not (some? repository) ["Codescene repository not specified"])
-        (when analyze-latest-individually
+        (when analyze-individual-commits
           [(when-not (some? current-commit) "Current commit not specified")
            (when-not (some? previous-commit) "Previous commit not specified")])
         (when analyze-branch-diff
@@ -95,17 +97,20 @@
                 {:options options})))))
 
 (defn run-analysis [options listener]
-  (let [{:keys [analyze-latest-individually analyze-branch-diff previous-commit base-revision]} options]
+  (let [{:keys [analyze-individual-commits analyze-branch-diff previous-commit base-revision]} options]
     (concat
-      (when (and analyze-latest-individually (some? previous-commit))
-        (delta-analysis/analyze-latest-individual-commit-for options listener))
+      (when (and analyze-individual-commits (some? previous-commit))
+        (delta-analysis/analyze-individual-commits-for options listener))
       (when (and analyze-branch-diff (some? base-revision))
         (delta-analysis/analyze-work-on-branch-for options listener)))))
 
+
+
 (defn create-gitlab-note [options results]
-  (let [{:keys [gitlab-api-url api-token project-id merge-request-iid]} options]
+  (let [{:keys [gitlab-api-url api-token project-id merge-request-iid]} options
+        lines (results/as-text-lines results options "CodeScene Delta Analysis Results" true)]
     (gitlab/create-merge-request-note gitlab-api-url api-token project-id merge-request-iid
-                                      "CodeScene Analysis results.....")))
+                                      (string/join \newline lines))))
 
 (defn -main
   [& args]
@@ -116,14 +121,10 @@
       (try
         (let [results (run-analysis options listener)
               success (not-any? :unstable results)]
-          (when (and success (:create-gitlab-note options))
+          (when (and (not success) (:create-gitlab-note options))
             (create-gitlab-note options results))
-          (exit success ""))
+          (exit success (if success "CodeScene delta analysis ok!" "CodeScene delta analysis detected problems!")))
+        (catch Exception e                                  ; TODO: Use RemoteAnalysisException for codescene failure
+          (exit (:pass-on-failed-analysis options) (str "CodeScene couldn't perform the delta analysis:\n" e)))
         (catch Exception e
-          (listener "Remote failure as CodeScene couldn't perform the delta analysis:")
-          (listener e)
-          (exit (:pass-on-failed-analysis options) ""))
-        (catch Exception e
-          (listener "Failed to run delta analysis:")
-          (listener e)
-          (exit false ""))))))
+          (exit false (str "Failed to run delta analysis:\n" e)))))))

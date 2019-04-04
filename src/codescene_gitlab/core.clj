@@ -1,95 +1,98 @@
 (ns codescene-gitlab.core
+  (:require [clojure.string :as string]
+            [clojure.tools.cli :as cli]
+            [codescene-gitlab.delta-analysis :as delta-analysis]
+            [codescene-gitlab.gitlab-api :as gitlab])
   (:gen-class)
-  (:require [clj-http.client :as http]
-            [clojure.stacktrace :as stacktrace]
-            [clojure.string :as str]
-            [clojure.java.io :as io]
-            [clojure.java.shell :as shell]))
+  ;;(:import (codescene_gitlab RemoteAnalysisException))
+  )
 
-(defn- commit-range [from-commit to-commit]
-  [from-commit to-commit]
-  (->> (shell/sh "git" "log" "--pretty='%H'" (format "%s..%s" from-commit to-commit))
-       :out
-       (#(str/split % #"\n"))
-       (map #(str/replace % #"['\"]" ""))))
+(def ^:private cli-options
+  [["-h" "--help"]
+   [nil "--url URL" "Project Delta Analysis URL" :default "http://localhost:3005/projects/1/delta-analysis"]
+   ["-u" "--user USER" "CodeScene User" :default "bot"]
+   ["-p" "--password PWD" "CodeScene Password" :default "0bca8fd9-c137-47c7-9c2b-98f6fbc2cd1c"]
+   ["-r" "--repository REPO" "Repository" :default "cmake-project-template"]
+   [nil "--use-biomarkers" "Use Biomarkers" :default true]
+   [nil "--pass-on-failed-analysis" "Build Success on Failed Analysis" :default true]
+   [nil "--mark-build-as-unstable" "Mark as Unstable on High Risk" :default true]
+   [nil "--fail-on-failed-goal" "Mark Build as Unstable on Failed Goals" :default true]
+   [nil "--fail-on-declining-code-health" "Mark Build as Unstable on Code Health Decline" :default true]
+   [nil "--coupling-threshold-percent" "Temporal Coupling Threshold (in percent)" :default 75]
+   [nil "--risk-threshold" nil :default 9]
+   [nil "--previous-commit" nil :default "aa39b593"]
+   [nil "--current-commit" :default "c8c5f971"]
+   [nil "--branch" nil :default "master"]
+   [nil "--analyze-latest-individually" "Individual Commits" :default true]
+   [nil "--analyze-branch-diff" "By Branch" :default false]
+   [nil "--gitlab-url" "GitLab URL" :default nil]
+   [nil "--project-id" "GitLab Project ID" :default nil]
+   [nil "--api-token" "GitLab API Token" :default nil]
+   [nil "--merge-request-iid" "GitLab Merge Request IID" :default nil]
+   [nil "--create-gitlab-note" "By Branch" :default false]
+   [nil "--base-revision" nil :default "aa39b593"]
+   [nil "--html-dir" "Path where html output is generated" :default nil]])
 
-(defn- run-delta-analyses-on-commits [config commits listener]
-  (let [{:keys [url user password repository coupling-threshold-percent]} config]
-    (listener (format "Running delta analysis on commits (%s) in repository %s." (str/join "," commits) repository))
-    (-> (http/post url
-                      {:basic-auth   [user password]
-                       :content-type :json
-                       :form-params  {:commits                    commits
-                                      :repository                 repository
-                                      :coupling_threshold_percent coupling-threshold-percent}
-                       :as           :json})
-        :body
-        (assoc :title (first commits)))))
+(defn- usage [options-summary]
+  (->> ["Usage: codescene-gitlab [options]"
+        "Options:"
+        options-summary]
+       (string/join \newline)))
 
+(defn- error-msg [errors]
+  (str "The following errors occurred while parsing your command:\n\n"
+       (string/join \newline errors)))
 
-(defn- run-delta-analyses-on-individual-commits [config commits listener]
-  (listener (format "Starting delta analysis on %d commit(s)..." (count commits)))
-  (mapv #(run-delta-analyses-on-commits config [%] listener) commits))
+(defn- exit [success? msg]
+  (println success? msg)
+  (System/exit (if success? 0 1)))
 
-(defn- run-delta-analyses-on-branch-diff [config commits branch listener]
-  (listener (format "Running delta analysis on branch %s." branch))
-  [(run-delta-analyses-on-commits config commits listener)])
+(defn- validate-options [options]
+  true)
 
-(defn- print-result [entries config title show-commits listener]
-  (listener title)
-  (doseq [entry entries]
-    (listener entry)))
+(defn parse-args
+  [args]
+  (let [{:keys [options arguments errors summary]} (cli/parse-opts args cli-options)]
+    (cond
+      ;; help => exit OK with usage summary
+      (:help options) {:exit-message (usage summary) :ok? true}
+      ;; errors => exit with description of errors
+      errors {:exit-message (error-msg errors)}
+      ;; custom validation on arguments
+      (validate-options options) {:options options}
+      ;; failed custom validation => exit with usage summary
+      :else {:exit-message (usage summary)})))
 
-(defn- url-parts [url]
-  (let [java-url (io/as-url url)]
-    {:protocol (.getProtocol java-url)
-     :host (.getHost java-url)
-     :port (.getPort java-url)}))
+(defn run-analysis [options listener]
+  (let [{:keys [analyze-latest-individually analyze-branch-diff previous-commit base-revision]} options]
+    (concat
+     (when (and analyze-latest-individually (some? previous-commit))
+       (delta-analysis/analyze-latest-individual-commit-for options listener))
+     (when (and analyze-branch-diff (some? base-revision))
+       (delta-analysis/analyze-work-on-branch-for options listener)))))
 
-(defn- mark-as-unstable-when-at-risk-threshold [entries config listener]
-  (let [{:keys [risk-threshold url]} config
-        {:keys [protocol host port]} (url-parts url)]
-    (doseq [entry entries]
-     (let [view-url(format "%s//%s:%d%s" protocol host port (:view entry))
-           risk (get-in entry [:result :risk])]
-       (when (>= risk risk-threshold)
-         (listener (format "Delta analysis result with risk %d hits the risk threshold (%d). Marking build as unstable (%s)."
-                           risk risk-threshold view-url)))))))
+(defn create-gitlab-note [options results]
+  (let [{:keys [gitlab-url api-token project-id merge-request-iid]} options]
+    (gitlab/create-merge-request-note gitlab-url api-token project-id merge-request-iid
+                                      "CodeScene Analysis results.....")))
 
 (defn -main
   [& args]
-  (let [config {:url                        "http://localhost:3005/projects/1/delta-analysis"
-                :user                       "bot"
-                :password                   "0bca8fd9-c137-47c7-9c2b-98f6fbc2cd1c"
-                :repository                 "cmake-project-template"
-                :coupling-threshold-percent 75
-                :risk-threshold 9}
-        previous-commit "aa39b593"
-        current-commit "c8c5f971"
-        branch "master"
-        analyze-latest-individually true
-        analyze-branch-diff false
-        base-revision "aa39b593"
-        listener clojure.pprint/pprint]
-    (try
-      (cond
-        (and analyze-latest-individually (some? previous-commit))
-        (let [commits (commit-range previous-commit current-commit)]
-          (if (seq commits)
-            (-> (run-delta-analyses-on-individual-commits config commits listener)
-                (#(doto % (print-result config "Delta - Individual Commits" true listener)))
-                (mark-as-unstable-when-at-risk-threshold config listener))
-            (listener "No new commits to analyze individually for this build.")))
-        (and analyze-branch-diff (some? base-revision))
-        (let [commits (commit-range base-revision current-commit)]
-          (when (seq commits)
-            (-> (run-delta-analyses-on-branch-diff config commits branch listener)
-                (#(doto % (print-result config "Delta - By Branch" false listener)))
-                (mark-as-unstable-when-at-risk-threshold config listener))))
-        :else (listener "No delta analysis configured."))
-      (catch Exception e
-        (listener "Failed to run delta analysis:")
-        (listener e)))))
-
-
-
+  (let [{:keys [options exit-message ok?]} (parse-args args)
+        listener println]
+    (if exit-message
+      (exit ok? exit-message)
+      (try
+        (let [results (run-analysis options listener)
+              success (not-any? :unstable results)]
+          (when (and success (:create-gitlab-note options))
+            (create-gitlab-note options results))
+          (exit success ""))
+        (catch Exception e
+          (listener "Remote failure as CodeScene couldn't perform the delta analysis:")
+          (listener e)
+          (exit (:pass-on-failed-analysis options) ""))
+        (catch Exception e
+          (listener "Failed to run delta analysis:")
+          (listener e)
+          (exit false ""))))))

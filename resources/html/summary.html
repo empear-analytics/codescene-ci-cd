@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+        <style data-inline="true">
+            .codescene-delta-analysis-action h2,
+            .codescene-delta-analysis-action h3,
+            .codescene-delta-analysis-action h4,
+            .codescene-delta-analysis-action ul,
+            .codescene-delta-analysis-action span,
+            .codescene-delta-analysis-action p
+            {
+                font-family: monospace;
+            }
+
+            .codescene-delta-analysis-action h2 {
+              text-align: center;
+              margin-bottom: 30px;
+            }
+            .codescene-delta-analysis-action .entry {
+                background: #f0f0f0;
+                margin: 0 0 20px;
+            }
+
+            .codescene-delta-analysis-action .entry .header {
+                position: relative;
+                color: #fff;
+                min-height: 50px;;
+            }
+            .codescene-delta-analysis-action .entry .header:after {
+              display: block;
+              content: '';
+              clear: both;
+            }
+
+            .codescene-delta-analysis-action .risk {
+                position: absolute;
+                top: 0;
+                left: 0;
+                padding: 0 10px;
+                text-align: center;
+                background: #ffdc00;
+                color: #333;
+                height: 50px;
+                width: 50px;
+            }
+            .codescene-delta-analysis-action .risk.hits-risk-threshold {
+                background: #fe6849;
+            }
+
+            .codescene-delta-analysis-action .risk h4 {
+                margin: 8px 0 0;
+                text-align: center;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                font-size: 10px;
+                font-weight: bold;
+                line-height: 16px;
+                color: inherit;
+            }
+
+            .codescene-delta-analysis-action .risk .value {
+                display: block;
+                font-size: 150%;
+                line-height: 18px;
+                font-weight: bold;
+            }
+
+            .codescene-delta-analysis-action .quality-gate {
+                position: absolute;
+                top: 0;
+                left: 50px;
+                padding: 0 10px;
+                text-align: center;
+                background: #59b300;
+                color: #333;
+                height: 50px;
+                width: 50px;
+            }
+            .codescene-delta-analysis-action .quality-gate.fails-quality-gate {
+                background: #fe6849;
+            }
+
+            .codescene-delta-analysis-action .quality-gate h4 {
+                margin: 8px 0 0;
+                text-align: center;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                font-size: 10px;
+                font-weight: bold;
+                line-height: 16px;
+                color: inherit;
+            }
+
+            .codescene-delta-analysis-action .quality-gate .value {
+                display: block;
+                font-size: 150%;
+                line-height: 18px;
+                font-weight: bold;
+            }
+
+            .codescene-delta-analysis-action .entry .body {
+                padding: 20px 20px 20px;
+            }
+
+            .codescene-delta-analysis-action .header h3 {
+                margin: 0;
+                font-size: 100%;
+                text-align: center;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+            }
+
+            .codescene-delta-analysis-action .header a {
+                display: block;
+                padding: 10px 70px;
+                line-height: 30px;
+                min-height: 50px;
+                color: #444;
+                background: #ccc;
+                text-decoration: none;
+            }
+
+            .codescene-delta-analysis-action a:hover {
+                color: #666;
+                background: #ddd;
+            }
+
+            .codescene-delta-analysis-action ul ul {
+                margin: 5px 0;
+            }
+
+            .codescene-delta-analysis-action th,
+            .codescene-delta-analysis-action td {
+                padding: 2px 8px;
+            }
+            .codescene-delta-analysis-action h4,
+            .codescene-delta-analysis-action .missing {
+                font-size: 100%;
+                font-weight: 500;
+                color: #666;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+            }
+            .codescene-delta-analysis-action p.hits-risk-threshold {
+                color: #fe6849;
+                font-weight: bold;
+            }
+            .codescene-delta-analysis-action p.fails-quality-gate {
+                color: #fe6849;
+                font-weight: bold;
+            }
+
+    </style>
+</head>
+<body>
+    <div class="codescene-delta-analysis-action">
+        <h2>${it.title}</h2>
+        <j:forEach var="entry" items="${it.entries}">
+            <div class="entry">
+
+                <div class="header">
+                    <h3>
+                        <a href="${entry.viewUrl}">
+                            ${entry.title}
+                        </a>
+                    </h3>
+
+
+                    <j:if test="${entry.hitsRiskThreshold}">
+                        <div class="risk hits-risk-threshold">
+                            <h4>Risk</h4>
+                            <span class="value">${entry.risk.value}</span>
+                        </div>
+                    </j:if>
+                    <j:if test="${!entry.hitsRiskThreshold}">
+                        <div class="risk">
+                            <h4>Risk</h4>
+                            <span class="value">${entry.risk.value}</span>
+                        </div>
+                    </j:if>
+
+                    <j:if test="${entry.goalHasFailed || entry.codeHealthDeclined}">
+                        <div class="quality-gate fails-quality-gate">
+                            <h4>Fail</h4>
+                            <span class="value">QG</span>
+                        </div>
+                    </j:if>
+                    <j:if test="${entry.qualityGatesEnabled and (!entry.goalHasFailed || !entry.codeHealthDeclined)}">
+                        <div class="quality-gate">
+                            <h4>OK</h4>
+                            <span class="value">QG</span>
+                        </div>
+                    </j:if>
+
+                </div>
+
+                <div class="body">
+
+                    <j:if test="${entry.goalHasFailed}">
+                        <p class="fails-quality-gate">Failed Quality Gate: a goal -- as defined by CodeScene's Intelligent Notes -- is violated. Check the details below.</p>
+                    </j:if>
+
+                    <j:if test="${entry.codeHealthDeclined}">
+                        <p class="fails-quality-gate">Failed Quality Gate: the code degrades in health. Check the details below.</p>
+                    </j:if>
+
+                    <j:if test="${entry.hitsRiskThreshold}">
+                        <p class="hits-risk-threshold">This delta hit the configured risk threshold of ${entry.riskThreshold}.</p>
+                    </j:if>
+
+                    <p>${entry.description}</p>
+
+                    <j:if test="${entry.showCommits}">
+                        <h4>Commits</h4>
+                        <ul>
+                            <j:forEach var="commit" items="${entry.commits}">
+                                <li>${commit}</li>
+                            </j:forEach>
+                        </ul>
+                    </j:if>
+
+                    <j:if test="${entry.hasWarnings}">
+                        <j:forEach var="warning" items="${entry.warnings}">
+                            <h4 class="category">${warning.category}</h4>
+                            <ul>
+                                <j:forEach var="detail" items="${warning.details}">
+                                    <li>${detail}</li>
+                                </j:forEach>
+                            </ul>
+                        </j:forEach>
+                    </j:if>
+                </div>
+
+            </div>
+        </j:forEach>
+        </div>
+    </body>
+</html>

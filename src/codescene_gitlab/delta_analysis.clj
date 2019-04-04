@@ -120,9 +120,9 @@
 
 
 (comment
-  (gitlab/get-merge-request-notes "http://localhost:8082" "Q9nE8fxxs5xymf-koUD-" 4 1)
-  (gitlab/create-merge-request-note "http://localhost:8082" "Q9nE8fxxs5xymf-koUD-" 4 1 "Bla bla bla")
-  (gitlab/delete-merge-request-note "http://localhost:8082" "Q9nE8fxxs5xymf-koUD-" 4 1 10)
+  (gitlab/get-merge-request-notes "http://localhost:8082/api/v4" "Q9nE8fxxs5xymf-koUD-" 4 1)
+  (gitlab/create-merge-request-note "http://localhost:8082/api/v4" "Q9nE8fxxs5xymf-koUD-" 4 1 "Bla bla bla")
+  (gitlab/delete-merge-request-note "http://localhost:8082/api/v4" "Q9nE8fxxs5xymf-koUD-" 4 1 10)
   (http/post "http://localhost:8082/api/v4/projects/4/merge_requests/1/notes"
              {:headers {"PRIVATE-TOKEN" "Q9nE8fxxs5xymf-koUD-"}
               :query-params {:body "ANote"}})

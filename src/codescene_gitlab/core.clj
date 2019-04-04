@@ -30,7 +30,7 @@
    [nil "--current-commit SHA" "Current Commit Id"]
    [nil "--base-revision SHA" "Base Revision Id"]
    [nil "--branch BRANCH" "Branch to analyze" :default "master"]
-   [nil "--gitlab-url URL" "GitLab URL"]
+   [nil "--gitlab-api-url URL" "GitLab API URL"]
    [nil "--api-token TOKEN" "GitLab API Token"]
    [nil "--project-id ID" "GitLab Project ID" :parse-fn #(Integer/parseInt %)]
    [nil "--merge-request-iid IID" "GitLab Merge Request IID" :parse-fn #(Integer/parseInt %)]
@@ -58,7 +58,7 @@
   (let [{:keys [analyze-latest-individually analyze-branch-diff create-gitlab-note
                 delta-analysis-url user password repository
                 previous-commit current-commit base-revision
-                gitlab-url api-token project-id merge-request-iid]} options]
+                gitlab-api-url api-token project-id merge-request-iid]} options]
     (filter
       some?
       (concat
@@ -74,7 +74,7 @@
           [(when-not (some? current-commit) "Current commit not specified")
            (when-not (some? base-revision) "Base revision not specified")])
         (when create-gitlab-note
-          [(when-not (some? gitlab-url) "GitLab URL not specified")
+          [(when-not (some? gitlab-api-url) "GitLab API URL not specified")
            (when-not (some? api-token) "API token not specified")
            (when-not (some? project-id) "Project Id not specified")
            (when-not (some? merge-request-iid) "Merge request IID not specified")])))))
@@ -103,8 +103,8 @@
         (delta-analysis/analyze-work-on-branch-for options listener)))))
 
 (defn create-gitlab-note [options results]
-  (let [{:keys [gitlab-url api-token project-id merge-request-iid]} options]
-    (gitlab/create-merge-request-note gitlab-url api-token project-id merge-request-iid
+  (let [{:keys [gitlab-api-url api-token project-id merge-request-iid]} options]
+    (gitlab/create-merge-request-note gitlab-api-url api-token project-id merge-request-iid
                                       "CodeScene Analysis results.....")))
 
 (defn -main

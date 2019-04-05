@@ -6,16 +6,20 @@
   (listener (format "Get commits from %s to %s..." from-commit to-commit))
   (git/commit-range from-commit to-commit))
 
-(defn- run-delta-analysis-on-individual-commits [config commits listener]
+(defn- run-delta-analysis-and-attach-info [config commits listener]
+  (-> (codescene/run-delta-analysis-on-commits config commits listener)
+      (assoc :title (first commits) :commits commits)))
+
+(defn- run-delta-analysis-on-individual-commits [config commits _branch listener]
   (listener (format "Starting delta analysis on %d commit(s)..." (count commits)))
-  (mapv #(codescene/run-delta-analysis-on-commits config [%] listener) commits))
+  (mapv #(run-delta-analysis-and-attach-info config [%] listener) commits))
 
 (defn- run-delta-analysis-on-branch-diff [config commits branch listener]
   (listener (format "Running delta analysis on branch %s." branch))
-  [(codescene/run-delta-analysis-on-commits config commits listener)])
+  [(run-delta-analysis-and-attach-info config commits listener)])
 
-(defn- fail [entry & keys]
-  (apply assoc entry (mapcat (fn [x] [x true]) keys)))
+(defn- fail [entry & fail-keys]
+  (apply assoc entry (mapcat (fn [x] [x true]) fail-keys)))
 
 (defn- fail-when-failed-goal [entry config listener]
   (let [{:keys [fail-on-failed-goal]} config
@@ -45,13 +49,10 @@
         (fail entry :unstable :hits-risk-threshold))
       entry)))
 
-(defn analyze-individual-commits-for [config listener]
-  (let [{:keys [previous-commit
-                current-commit
-                base-revision]} config
-        commits (commit-range (or previous-commit base-revision) current-commit listener)]
+(defn- analyze [config from-commit to-commit branch delta-analysis-fn listener]
+  (let [commits (commit-range from-commit to-commit listener)]
     (if (seq commits)
-      (->> (run-delta-analysis-on-individual-commits config commits listener)
+      (->> (delta-analysis-fn config commits branch listener)
            (map #(fail-when-failed-goal % config listener))
            (map #(fail-when-code-health-declines % config listener))
            (map #(fail-when-at-risk-threshold % config listener)))
@@ -59,15 +60,11 @@
         (listener "No new commits to analyze individually for this build.")
         []))))
 
-(defn analyze-work-on-branch-for
-  [{:keys [current-commit
-           base-revision
-           branch] :as config}
-   listener]
-  (let [commits (commit-range base-revision current-commit listener)]
-    (if (seq commits)
-      (-> (run-delta-analysis-on-branch-diff config commits branch listener)
-          (map #(fail-when-failed-goal % config listener))
-          (map #(fail-when-code-health-declines % config listener))
-          (map #(fail-when-at-risk-threshold % config listener)))
-      [])))
+(defn analyze-individual-commits-for [config listener]
+  (let [{:keys [previous-commit current-commit base-revision branch]} config
+        from-commit (or previous-commit base-revision)]
+    (analyze config from-commit current-commit branch run-delta-analysis-on-individual-commits listener)))
+
+(defn analyze-work-on-branch-for [config listener]
+  (let [{:keys [current-commit base-revision branch]} config]
+    (analyze config base-revision current-commit branch run-delta-analysis-on-branch-diff listener)))

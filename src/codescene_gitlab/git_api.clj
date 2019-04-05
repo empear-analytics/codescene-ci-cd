@@ -7,4 +7,6 @@
   (->> (shell/sh "git" "log" "--pretty='%H'" (format "%s..%s" from-commit to-commit))
        :out
        (#(string/split % #"\n"))
-       (map #(string/replace % #"['\"]" ""))))
+       (map #(string/replace % #"['\"]" ""))
+       (#(doto % clojure.pprint/pprint))
+       ))

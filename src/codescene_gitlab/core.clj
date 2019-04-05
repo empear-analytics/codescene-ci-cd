@@ -5,9 +5,9 @@
             [codescene-gitlab.delta-analysis :as delta-analysis]
             [codescene-gitlab.gitlab-api :as gitlab]
             [codescene-gitlab.results :as results])
-  (:gen-class)
-  ;;(:import (codescene_gitlab RemoteAnalysisException))
-  )
+  (:gen-class))
+
+(def ^:private codescene-note-identifier "4744e426-5795-11e9-8647-d663bd873d93")
 
 (def ^:private cli-options
   [["-h" "--help"]
@@ -52,9 +52,14 @@
   (str "The following validation errors occurred for your command:\n\n"
        (string/join \newline errors)))
 
-(defn- exit [success? msg]
-  (println success? msg)
-  (System/exit (if success? 0 1)))
+(defn- exit [ok? msg listener]
+  (listener msg)
+  (System/exit (if ok? 0 1)))
+
+(defn- exit-with-exception[ok? msg e listener]
+  (listener msg)
+  (listener (with-out-str (clojure.stacktrace/print-stack-trace e)))
+  (System/exit (if ok? 0 1)))
 
 (defn- validate-options [options]
   (let [{:keys [analyze-individual-commits analyze-branch-diff create-gitlab-note
@@ -104,27 +109,65 @@
       (when (and analyze-branch-diff (some? base-revision))
         (delta-analysis/analyze-work-on-branch-for options listener)))))
 
+(defn find-codescene-note-ids [gitlab-api-url api-token project-id merge-request-iid codescene-note-identifier]
+  (->> (gitlab/get-merge-request-notes gitlab-api-url api-token project-id merge-request-iid)
+       (filter #(string/includes? (:body %) codescene-note-identifier))
+       (map :id)))
 
-
-(defn create-gitlab-note [options results]
+(defn create-gitlab-note [options results listener]
+  (listener "Create GitLab Note for merge request...")
   (let [{:keys [gitlab-api-url api-token project-id merge-request-iid]} options
-        lines (results/as-text-lines results options "CodeScene Delta Analysis Results" true)]
+        note-ids (find-codescene-note-ids gitlab-api-url api-token project-id merge-request-iid codescene-note-identifier)
+        markdown (results/as-markdown results options )
+        identifier-comment (format "<!--%s-->" codescene-note-identifier)]
+    (doseq [note-id note-ids]
+      (listener (format "Remove old GitLab Note with id %d for merge request..." note-id))
+      (gitlab/delete-merge-request-note gitlab-api-url api-token project-id merge-request-iid note-id))
     (gitlab/create-merge-request-note gitlab-api-url api-token project-id merge-request-iid
-                                      (string/join \newline lines))))
+                                      (string/join \newline [identifier-comment markdown]))))
 
 (defn -main
   [& args]
   (let [{:keys [options exit-message ok?]} (parse-args args)
         listener println]
     (if exit-message
-      (exit ok? exit-message)
+      (exit ok? exit-message listener)
       (try
+        (clojure.pprint/pprint options)
         (let [results (run-analysis options listener)
               success (not-any? :unstable results)]
-          (when (and (not success) (:create-gitlab-note options))
-            (create-gitlab-note options results))
-          (exit success (if success "CodeScene delta analysis ok!" "CodeScene delta analysis detected problems!")))
-        (catch Exception e                                  ; TODO: Use RemoteAnalysisException for codescene failure
-          (exit (:pass-on-failed-analysis options) (str "CodeScene couldn't perform the delta analysis:\n" e)))
+          (when (:create-gitlab-note options)
+            (create-gitlab-note options results listener))
+          (exit success
+                (if success "CodeScene delta analysis ok!" "CodeScene delta analysis detected problems!")
+                listener))
+        (catch clojure.lang.ExceptionInfo e
+          (if (= :remote-analysis-exception (-> e ex-data :type))
+            (exit-with-exception (:pass-on-failed-analysis options) "CodeScene couldn't perform the delta analysis:" e listener)
+            (exit-with-exception false "Failed to run delta analysis:" e listener)))
         (catch Exception e
-          (exit false (str "Failed to run delta analysis:\n" e)))))))
+          (exit-with-exception false "Failed to run delta analysis:" e listener))))))
+
+(comment
+  (def options {:use-biomarkers true,
+                :analyze-individual-commits false,
+                :repository "cmake-project-template",
+                :create-gitlab-note true,
+                :password "0bca8fd9-c137-47c7-9c2b-98f6fbc2cd1c",
+                :delta-analysis-url "http://localhost:3005/projects/2/delta-analysis",
+                :analyze-branch-diff true,
+                :fail-on-declining-code-health true,
+                :risk-threshold 7,
+                :pass-on-failed-analysis true,
+                :base-revision "origin/master",
+                :coupling-threshold-percent 45,
+                :merge-request-iid 1,
+                :branch "my-branch",
+                :project-id 4,
+                :api-token "Q9nE8fxxs5xymf-koUD-",
+                :current-commit "96539487a532cadc1f9177cf4b6b1a61bad88049",
+                :gitlab-api-url "http://gitlab:80/api/v4",
+                :user "bot",
+                :fail-on-failed-goal true,
+                :fail-on-high-risk true})
+  (def results (binding [clojure.java.shell/*sh-dir* d] (run-analysis options println))))

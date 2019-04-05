@@ -13,4 +13,5 @@
                                    :coupling_threshold_percent coupling-threshold-percent}
                     :as           :json})
         :body
-        (assoc :title (first commits)))))
+        (#(doto % clojure.pprint/pprint))
+        )))

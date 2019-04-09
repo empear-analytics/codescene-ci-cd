@@ -4,7 +4,9 @@
             [clojure.tools.cli :as cli]
             [codescene-gitlab.delta-analysis :as delta-analysis]
             [codescene-gitlab.gitlab-api :as gitlab]
-            [codescene-gitlab.results :as results])
+            [codescene-gitlab.results :as results]
+            [clojure.java.io :as io]
+            [clojure.data.json :as json])
   (:gen-class))
 
 (def ^:private codescene-note-identifier "4744e426-5795-11e9-8647-d663bd873d93")
@@ -36,7 +38,8 @@
    [nil "--api-token TOKEN" "GitLab API Token"]
    [nil "--project-id ID" "GitLab Project ID" :parse-fn #(Integer/parseInt %)]
    [nil "--merge-request-iid IID" "GitLab Merge Request IID" :parse-fn #(Integer/parseInt %)]
-   [nil "--html-dir DIR" "Path where html output is generated"]])
+   [nil "--result-path FILENAME" "Path where JSON output is generated"]
+   [nil "--http-timeout TIMEOUT-MS" "Timeout for http API calls" :parse-fn #(Integer/parseInt %)]])
 
 (defn- usage [options-summary]
   (->> ["Usage: codescene-gitlab [options]"
@@ -52,13 +55,13 @@
   (str "The following validation errors occurred for your command:\n\n"
        (string/join \newline errors)))
 
-(defn- exit [ok? msg listener]
-  (listener msg)
+(defn- exit [ok? msg log-fn]
+  (log-fn msg)
   (System/exit (if ok? 0 1)))
 
-(defn- exit-with-exception[ok? msg e listener]
-  (listener msg)
-  (listener (with-out-str (clojure.stacktrace/print-stack-trace e)))
+(defn- exit-with-exception[ok? msg e log-fn]
+  (log-fn msg)
+  (log-fn (with-out-str (clojure.stacktrace/print-stack-trace e)))
   (System/exit (if ok? 0 1)))
 
 (defn- validate-options [options]
@@ -101,52 +104,54 @@
                 ;; success => exit with options
                 {:options options})))))
 
-(defn run-analysis [options listener]
+(defn run-analysis [options log-fn]
   (let [{:keys [analyze-individual-commits analyze-branch-diff previous-commit base-revision]} options]
     (concat
       (when (and analyze-individual-commits (some? previous-commit))
-        (delta-analysis/analyze-individual-commits-for options listener))
+        (delta-analysis/analyze-individual-commits-for options log-fn))
       (when (and analyze-branch-diff (some? base-revision))
-        (delta-analysis/analyze-work-on-branch-for options listener)))))
+        (delta-analysis/analyze-work-on-branch-for options log-fn)))))
 
-(defn find-codescene-note-ids [gitlab-api-url api-token project-id merge-request-iid codescene-note-identifier]
-  (->> (gitlab/get-merge-request-notes gitlab-api-url api-token project-id merge-request-iid)
+(defn find-codescene-note-ids [gitlab-api-url api-token project-id merge-request-iid codescene-note-identifier timeout]
+  (->> (gitlab/get-merge-request-notes gitlab-api-url api-token project-id merge-request-iid timeout)
        (filter #(string/includes? (:body %) codescene-note-identifier))
        (map :id)))
 
-(defn create-gitlab-note [options results listener]
-  (listener "Create GitLab Note for merge request...")
-  (let [{:keys [gitlab-api-url api-token project-id merge-request-iid]} options
-        note-ids (find-codescene-note-ids gitlab-api-url api-token project-id merge-request-iid codescene-note-identifier)
+(defn create-gitlab-note [options results log-fn]
+  (log-fn "Create GitLab Note for merge request...")
+  (let [{:keys [gitlab-api-url api-token project-id merge-request-iid http-timeout]} options
+        note-ids (find-codescene-note-ids gitlab-api-url api-token project-id merge-request-iid codescene-note-identifier http-timeout)
         markdown (results/as-markdown results options )
         identifier-comment (format "<!--%s-->" codescene-note-identifier)]
     (doseq [note-id note-ids]
-      (listener (format "Remove old GitLab Note with id %d for merge request..." note-id))
-      (gitlab/delete-merge-request-note gitlab-api-url api-token project-id merge-request-iid note-id))
+      (log-fn (format "Remove old GitLab Note with id %d for merge request..." note-id))
+      (gitlab/delete-merge-request-note gitlab-api-url api-token project-id merge-request-iid note-id http-timeout))
     (gitlab/create-merge-request-note gitlab-api-url api-token project-id merge-request-iid
-                                      (string/join \newline [identifier-comment markdown]))))
+                                      (string/join \newline [identifier-comment markdown]) http-timeout)))
 
-(defn -main
-  [& args]
+(defn ex->str [e]
+  (str e (or (ex-data e) "") (with-out-str (clojure.stacktrace/print-stack-trace e))))
+
+(defn run-analysis-and-handle-result [options log-fn]
+  (try
+    (let [results (run-analysis options log-fn)
+          success (not-any? :unstable results)]
+      (when-let [result-path (:result-path options)]
+        (with-open [wr (io/writer result-path)]
+          (.write wr (json/write-str results))))
+      (when (:create-gitlab-note options)
+        (create-gitlab-note options results log-fn))
+      [success (if success "CodeScene delta analysis ok!" "CodeScene delta analysis detected problems!")])
+    (catch Exception e
+      [(:pass-on-failed-analysis options) (str "CodeScene couldn't perform the delta analysis:" (ex->str e))])))
+
+(defn -main [& args]
   (let [{:keys [options exit-message ok?]} (parse-args args)
-        listener println]
+        log-fn println]
     (if exit-message
-      (exit ok? exit-message listener)
-      (try
-        (clojure.pprint/pprint options)
-        (let [results (run-analysis options listener)
-              success (not-any? :unstable results)]
-          (when (:create-gitlab-note options)
-            (create-gitlab-note options results listener))
-          (exit success
-                (if success "CodeScene delta analysis ok!" "CodeScene delta analysis detected problems!")
-                listener))
-        (catch clojure.lang.ExceptionInfo e
-          (if (= :remote-analysis-exception (-> e ex-data :type))
-            (exit-with-exception (:pass-on-failed-analysis options) "CodeScene couldn't perform the delta analysis:" e listener)
-            (exit-with-exception false "Failed to run delta analysis:" e listener)))
-        (catch Exception e
-          (exit-with-exception false "Failed to run delta analysis:" e listener))))))
+      (exit ok? exit-message log-fn)
+      (let [{:keys [ok? exit-message ]} (run-analysis-and-handle-result options log-fn)]
+        (exit ok? exit-message log-fn)))))
 
 (comment
   (def options {:use-biomarkers true,
@@ -170,4 +175,4 @@
                 :user "bot",
                 :fail-on-failed-goal true,
                 :fail-on-high-risk true})
-  (def results (binding [clojure.java.shell/*sh-dir* d] (run-analysis options println))))
+  (def results (binding [clojure.java.shell/*sh-dir* d] (run-analysis-and-handle-result options println))))

@@ -1,4 +1,5 @@
 (ns codescene-gitlab.git-api
+  "Wraps the git command-line API"
   (:require [clojure.java.shell :as shell]
             [clojure.string :as string]))
 
@@ -7,6 +8,4 @@
   (->> (shell/sh "git" "log" "--pretty='%H'" (format "%s..%s" from-commit to-commit))
        :out
        (#(string/split % #"\n"))
-       (map #(string/replace % #"['\"]" ""))
-       (#(doto % clojure.pprint/pprint))
-       ))
+       (map #(string/replace % #"['\"]" ""))))

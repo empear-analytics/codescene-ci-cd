@@ -1,0 +1,21 @@
+language: clojure
+jdk:
+  - oraclejdk8
+
+addons:
+  apt:
+    sources:
+      - git-core
+    packages:
+      - git
+
+branches:
+  only:
+    - master
+    
+script: lein test
+
+cache:
+  apt: true
+  directories:
+  - $HOME/.m2

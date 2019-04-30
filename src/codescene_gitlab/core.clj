@@ -27,6 +27,7 @@
    [nil "--fail-on-failed-goal" "Mark Build as Unstable on Failed Goals" :default false]
    [nil "--fail-on-declining-code-health" "Mark Build as Unstable on Code Health Decline" :default false]
    [nil "--create-gitlab-note" "Create Note For Gitlab Merge Request" :default false]
+   [nil "--log-result" "Log the result (by printing)" :default false]
    ;; Arguments
    [nil "--coupling-threshold-percent THRESHOLD" "Temporal Coupling Threshold (in percent)" :default 75 :parse-fn #(Integer/parseInt %)]
    [nil "--risk-threshold THRESHOLD" "Risk Threshold" :default 9 :parse-fn #(Integer/parseInt %)]

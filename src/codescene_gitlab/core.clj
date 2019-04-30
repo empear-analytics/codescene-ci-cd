@@ -129,6 +129,9 @@
     (gitlab/create-merge-request-note gitlab-api-url api-token project-id merge-request-iid
                                       (string/join \newline [identifier-comment markdown]) http-timeout)))
 
+(defn log-result [options results log-fn]
+  (log-fn (results/as-text results options)))
+
 (defn ex->str [e]
   (str e (or (ex-data e) "") (with-out-str (clojure.stacktrace/print-stack-trace e))))
 
@@ -141,6 +144,8 @@
           (.write wr (json/write-str results))))
       (when (:create-gitlab-note options)
         (create-gitlab-note options results log-fn))
+      (when (:log-result options)
+        (log-result options results log-fn))
       [success (if success "CodeScene delta analysis ok!" "CodeScene delta analysis detected problems!")])
     (catch Exception e
       [(:pass-on-failed-analysis options) (str "CodeScene couldn't perform the delta analysis:" (ex->str e))])))
@@ -150,7 +155,7 @@
         log-fn println]
     (if exit-message
       (exit ok? exit-message log-fn)
-      (let [{:keys [ok? exit-message ]} (run-analysis-and-handle-result options log-fn)]
+      (let [[ok? exit-message] (run-analysis-and-handle-result options log-fn)]
         (exit ok? exit-message log-fn)))))
 
 (comment

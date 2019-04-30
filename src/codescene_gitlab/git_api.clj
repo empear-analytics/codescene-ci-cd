@@ -8,4 +8,5 @@
   (->> (shell/sh "git" "log" "--pretty='%H'" (format "%s..%s" from-commit to-commit))
        :out
        (#(string/split % #"\n"))
-       (mapv #(string/replace % #"['\"]" ""))))
+       (mapv #(string/replace % #"['\"]" ""))
+       (filter empty)))

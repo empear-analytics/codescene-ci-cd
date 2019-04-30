@@ -34,7 +34,6 @@
    [nil "--previous-commit SHA" "Previous Commit Id"]
    [nil "--current-commit SHA" "Current Commit Id"]
    [nil "--base-revision SHA" "Base Revision Id"]
-   [nil "--branch BRANCH" "Branch to analyze" :default "master"]
    [nil "--gitlab-api-url URL" "GitLab API URL"]
    [nil "--api-token TOKEN" "GitLab API Token"]
    [nil "--project-id ID" "GitLab Project ID" :parse-fn #(Integer/parseInt %)]
@@ -108,7 +107,7 @@
 (defn run-analysis [options log-fn]
   (let [{:keys [analyze-individual-commits analyze-branch-diff previous-commit base-revision]} options]
     (concat
-      (when (and analyze-individual-commits (some? previous-commit))
+      (when (and analyze-individual-commits (or (some? previous-commit) (some? base-revision)))
         (delta-analysis/analyze-individual-commits-for options log-fn))
       (when (and analyze-branch-diff (some? base-revision))
         (delta-analysis/analyze-work-on-branch-for options log-fn)))))
@@ -173,7 +172,6 @@
                 :base-revision "origin/master",
                 :coupling-threshold-percent 45,
                 :merge-request-iid 1,
-                :branch "my-branch",
                 :project-id 4,
                 :api-token "Q9nE8fxxs5xymf-koUD-",
                 :current-commit "96539487a532cadc1f9177cf4b6b1a61bad88049",

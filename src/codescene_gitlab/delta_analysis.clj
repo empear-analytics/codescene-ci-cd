@@ -10,12 +10,12 @@
   (-> (codescene/run-delta-analysis-on-commits config commits log-fn)
       (assoc :title (first commits) :commits commits)))
 
-(defn- run-delta-analysis-on-individual-commits [config commits _branch log-fn]
-  (log-fn (format "Starting delta analysis on %d commit(s)..." (count commits)))
+(defn- run-delta-analysis-on-individual-commits [config commits log-fn]
+  (log-fn (format "Starting delta analysis on %d individual commit(s)..." (count commits)))
   (mapv #(run-delta-analysis-and-attach-info config [%] log-fn) commits))
 
-(defn- run-delta-analysis-on-branch-diff [config commits branch log-fn]
-  (log-fn (format "Running delta analysis on branch %s." branch))
+(defn- run-delta-analysis-on-branch-diff [config commits log-fn]
+  (log-fn (format "Starting delta analysis on branch with %d commit(s)..." (count commits)))
   [(run-delta-analysis-and-attach-info config commits log-fn)])
 
 (defn- fail [entry & fail-keys]
@@ -49,10 +49,10 @@
         (fail entry :unstable :hits-risk-threshold))
       entry)))
 
-(defn- analyze [config from-commit to-commit branch delta-analysis-fn log-fn]
+(defn- analyze [config from-commit to-commit delta-analysis-fn log-fn]
   (let [commits (commit-range from-commit to-commit log-fn)]
     (if (seq commits)
-      (->> (delta-analysis-fn config commits branch log-fn)
+      (->> (delta-analysis-fn config commits log-fn)
            (map #(fail-when-failed-goal % config log-fn))
            (map #(fail-when-code-health-declines % config log-fn))
            (map #(fail-when-at-risk-threshold % config log-fn)))
@@ -61,10 +61,10 @@
         []))))
 
 (defn analyze-individual-commits-for [config log-fn]
-  (let [{:keys [previous-commit current-commit base-revision branch]} config
+  (let [{:keys [previous-commit current-commit base-revision]} config
         from-commit (or previous-commit base-revision)]
-    (analyze config from-commit current-commit branch run-delta-analysis-on-individual-commits log-fn)))
+    (analyze config from-commit current-commit run-delta-analysis-on-individual-commits log-fn)))
 
 (defn analyze-work-on-branch-for [config log-fn]
-  (let [{:keys [current-commit base-revision branch]} config]
-    (analyze config base-revision current-commit branch run-delta-analysis-on-branch-diff log-fn)))
+  (let [{:keys [current-commit base-revision]} config]
+    (analyze config base-revision current-commit run-delta-analysis-on-branch-diff log-fn)))

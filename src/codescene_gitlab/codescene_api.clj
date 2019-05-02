@@ -18,7 +18,18 @@
         :body)))
 
 (comment
-  (def config
+
+  (let [body (:body-params req)
+        commits (get body "commits")
+        repository (get body "repository")
+        coupling-threshold-percent (get body "coupling_threshold_percent")
+        use-biomarkers (get body "use_biomarkers" false)
+        origin-url (get body "origin_url")
+        change-ref (get body "change_ref")
+        {:keys [repo-paths] :as project} (project-feature/get-project-resolved-for-analysis (db/persistent-connection) project-id)])
+
+
+    (def config
    {:use-biomarkers                true,
     :repository                    "codescene-plugin",
     :password                      "0bca8fd9-c137-47c7-9c2b-98f6fbc2cd1c",

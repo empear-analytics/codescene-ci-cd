@@ -4,12 +4,13 @@
             [clojure.tools.cli :as cli]
             [codescene-gitlab.delta-analysis :as delta-analysis]
             [codescene-gitlab.gitlab-api :as gitlab]
+            [codescene-gitlab.github-api :as github]
             [codescene-gitlab.results :as results]
             [clojure.java.io :as io]
             [clojure.data.json :as json])
   (:gen-class))
 
-(def ^:private codescene-note-identifier "4744e426-5795-11e9-8647-d663bd873d93")
+(def ^:private codescene-identifier "4744e426-5795-11e9-8647-d663bd873d93")
 
 (def ^:private cli-options
   [["-h" "--help"]
@@ -27,17 +28,26 @@
    [nil "--fail-on-failed-goal" "Mark Build as Unstable on Failed Goals" :default false]
    [nil "--fail-on-declining-code-health" "Mark Build as Unstable on Code Health Decline" :default false]
    [nil "--create-gitlab-note" "Create Note For Gitlab Merge Request" :default false]
+   [nil "--create-github-comment" "Create Comment For GitHub Pull Request" :default false]
    [nil "--log-result" "Log the result (by printing)" :default false]
-   ;; Arguments
+   ;; Analysis arguments
    [nil "--coupling-threshold-percent THRESHOLD" "Temporal Coupling Threshold (in percent)" :default 75 :parse-fn #(Integer/parseInt %)]
    [nil "--risk-threshold THRESHOLD" "Risk Threshold" :default 9 :parse-fn #(Integer/parseInt %)]
    [nil "--previous-commit SHA" "Previous Commit Id"]
    [nil "--current-commit SHA" "Current Commit Id"]
    [nil "--base-revision SHA" "Base Revision Id"]
+   ;; GitLab settings
    [nil "--gitlab-api-url URL" "GitLab API URL"]
-   [nil "--api-token TOKEN" "GitLab API Token"]
-   [nil "--project-id ID" "GitLab Project ID" :parse-fn #(Integer/parseInt %)]
-   [nil "--merge-request-iid IID" "GitLab Merge Request IID" :parse-fn #(Integer/parseInt %)]
+   [nil "--gitlab-api-token TOKEN" "GitLab API Token"]
+   [nil "--gitlab-project-id ID" "GitLab Project ID" :parse-fn #(Integer/parseInt %)]
+   [nil "--gitlab-merge-request-iid IID" "GitLab Merge Request IID" :parse-fn #(Integer/parseInt %)]
+   ;; Github settings
+   [nil "--github-api-url URL" "GitHub API URL"]
+   [nil "--github-api-token TOKEN" "GitHub API Token"]
+   [nil "--github-owner OWNER" "GitHub Repository Owner"]
+   [nil "--github-repo REPO" "GitHub Repository Name"]
+   [nil "--github-pull-request-id ID" "GitHub Pull Request ID"]
+   ;; General settings
    [nil "--result-path FILENAME" "Path where JSON output is generated"]
    [nil "--http-timeout TIMEOUT-MS" "Timeout for http API calls" :parse-fn #(Integer/parseInt %)]])
 
@@ -65,10 +75,11 @@
   (System/exit (if ok? 0 1)))
 
 (defn- validate-options [options]
-  (let [{:keys [analyze-individual-commits analyze-branch-diff create-gitlab-note
+  (let [{:keys [analyze-individual-commits analyze-branch-diff create-gitlab-note create-github-comment
                 delta-analysis-url user password repository
                 previous-commit current-commit base-revision
-                gitlab-api-url api-token project-id merge-request-iid]} options]
+                gitlab-api-url gitlab-api-token gitlab-project-id gitlab-merge-request-iid
+                github-api-url github-api-token github-owner github-repo github-pull-request-id]} options]
     (filter
       some?
       (concat
@@ -85,9 +96,15 @@
            (when-not (some? base-revision) "Base revision not specified")])
         (when create-gitlab-note
           [(when-not (some? gitlab-api-url) "GitLab API URL not specified")
-           (when-not (some? api-token) "API token not specified")
-           (when-not (some? project-id) "Project Id not specified")
-           (when-not (some? merge-request-iid) "Merge request IID not specified")])))))
+           (when-not (some? gitlab-api-token) "GitLab API token not specified")
+           (when-not (some? gitlab-project-id) "GitLab Project Id not specified")
+           (when-not (some? gitlab-merge-request-iid) "GitLab Merge request IID not specified")])
+        (when create-github-comment
+          [(when-not (some? github-api-url) "GitHub API URL not specified")
+           (when-not (some? github-api-token) "GitHub API token not specified")
+           (when-not (some? github-owner) "GitHub repository owner not specified")
+           (when-not (some? github-repo) "GitHub repository name not specified")
+           (when-not (some? github-pull-request-id) "GitHub pull request ID not specified")])))))
 
 (defn parse-args
   [args]
@@ -112,21 +129,38 @@
       (when (and analyze-branch-diff (some? base-revision))
         (delta-analysis/analyze-work-on-branch-for options log-fn)))))
 
-(defn find-codescene-note-ids [gitlab-api-url api-token project-id merge-request-iid codescene-note-identifier timeout]
-  (->> (gitlab/get-merge-request-notes gitlab-api-url api-token project-id merge-request-iid timeout)
-       (filter #(string/includes? (:body %) codescene-note-identifier))
+(defn find-gitlab-note-ids [api-url api-token project-id merge-request-iid timeout]
+  (->> (gitlab/get-merge-request-notes api-url api-token project-id merge-request-iid timeout)
+       (filter #(string/includes? (:body %) codescene-identifier))
+       (map :id)))
+
+(defn find-github-comment-ids [api-url api-token owner repo pull-request-iid timeout]
+  (->> (github/get-pull-request-comments api-url api-token owner repo pull-request-iid timeout)
+       (filter #(string/includes? (:body %) codescene-identifier))
        (map :id)))
 
 (defn create-gitlab-note [options results log-fn]
   (log-fn "Create GitLab Note for merge request...")
-  (let [{:keys [gitlab-api-url api-token project-id merge-request-iid http-timeout]} options
-        note-ids (find-codescene-note-ids gitlab-api-url api-token project-id merge-request-iid codescene-note-identifier http-timeout)
+  (let [{:keys [gitlab-api-url gitlab-api-token gitlab-project-id gitlab-merge-request-iid http-timeout]} options
+        note-ids (find-gitlab-note-ids gitlab-api-url gitlab-api-token gitlab-project-id gitlab-merge-request-iid http-timeout)
         markdown (results/as-markdown results options )
-        identifier-comment (format "<!--%s-->" codescene-note-identifier)]
+        identifier-comment (format "<!--%s-->" codescene-identifier)]
     (doseq [note-id note-ids]
       (log-fn (format "Remove old GitLab Note with id %d for merge request..." note-id))
-      (gitlab/delete-merge-request-note gitlab-api-url api-token project-id merge-request-iid note-id http-timeout))
-    (gitlab/create-merge-request-note gitlab-api-url api-token project-id merge-request-iid
+      (gitlab/delete-merge-request-note gitlab-api-url gitlab-api-token gitlab-project-id gitlab-merge-request-iid note-id http-timeout))
+    (gitlab/create-merge-request-note gitlab-api-url gitlab-api-token gitlab-project-id gitlab-merge-request-iid
+                                      (string/join \newline [identifier-comment markdown]) http-timeout)))
+
+(defn create-github-comment [options results log-fn]
+  (log-fn "Create GitHub Comment for pull request...")
+  (let [{:keys [github-api-url github-api-token github-owner github-repo github-pull-request-id http-timeout]} options
+        comment-ids (find-github-comment-ids github-api-url github-api-token github-owner github-repo github-pull-request-id http-timeout)
+        markdown (results/as-markdown results options )
+        identifier-comment (format "<!--%s-->" codescene-identifier)]
+    (doseq [comment-id comment-ids]
+      (log-fn (format "Remove old GitLab Note with id %d for merge request..." comment-id))
+      (github/delete-pull-request-comment github-api-url github-api-token github-owner github-repo comment-id http-timeout))
+    (github/create-pull-request-comment github-api-url github-api-token github-owner github-repo  github-pull-request-id
                                       (string/join \newline [identifier-comment markdown]) http-timeout)))
 
 (defn log-result [options results log-fn]
@@ -144,11 +178,13 @@
           (.write wr (json/write-str results))))
       (when (:create-gitlab-note options)
         (create-gitlab-note options results log-fn))
+      (when (:create-github-comment options)
+        (create-github-comment options results log-fn))
       (when (:log-result options)
         (log-result options results log-fn))
       [success (if success "CodeScene delta analysis ok!" "CodeScene delta analysis detected problems!")])
     (catch Exception e
-      [(:pass-on-failed-analysis options) (str "CodeScene couldn't perform the delta analysis:" (ex->str e))])))
+      [(:pass-on-failed-analysis options) (str "CodeScene-CI/CD couldn't perform the delta analysis:" (ex->str e))])))
 
 (defn -main [& args]
   (let [{:keys [options exit-message ok?]} (parse-args args)
@@ -171,9 +207,9 @@
                 :pass-on-failed-analysis true,
                 :base-revision "origin/master",
                 :coupling-threshold-percent 45,
-                :merge-request-iid 1,
-                :project-id 4,
-                :api-token "Q9nE8fxxs5xymf-koUD-",
+                :gitlab-merge-request-iid 1,
+                :gitlab-project-id 4,
+                :gitlab-api-token "Q9nE8fxxs5xymf-koUD-",
                 :current-commit "96539487a532cadc1f9177cf4b6b1a61bad88049",
                 :gitlab-api-url "http://gitlab:80/api/v4",
                 :user "bot",

@@ -1,11 +1,11 @@
-(ns codescene-gitlab.core-test
+(ns codescene-ci-cd.core-test
   (:require [clojure.test :refer :all]
-            [codescene-gitlab.core :refer :all]
-            [codescene-gitlab.gitlab-api :as gitlab]
-            [codescene-gitlab.codescene-api :as codescene]
-            [codescene-gitlab.git-api :as git]
-            [codescene-gitlab.test-data :as test-data]
-            [codescene-gitlab.golden-copy :as golden-copy]))
+            [codescene-ci-cd.core :refer :all]
+            [codescene-ci-cd.gitlab-api :as gitlab]
+            [codescene-ci-cd.codescene-api :as codescene]
+            [codescene-ci-cd.git-api :as git]
+            [codescene-ci-cd.test-data :as test-data]
+            [codescene-ci-cd.golden-copy :as golden-copy]))
 
 (defmacro with-gitlab-no-op-redefs [& body]
   `(with-redefs [gitlab/get-merge-request-notes (constantly [])

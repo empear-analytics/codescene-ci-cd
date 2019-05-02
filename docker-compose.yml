@@ -1,5 +1,5 @@
 version: '2'
 services:
-  codescene-gitlab:
+  codescene-ci-cd:
     build: . 
     working_dir: /

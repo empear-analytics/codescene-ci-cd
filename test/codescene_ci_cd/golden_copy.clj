@@ -1,4 +1,4 @@
-(ns codescene-gitlab.golden-copy
+(ns codescene-ci-cd.golden-copy
   (:require [clojure.test :refer :all]))
 
 

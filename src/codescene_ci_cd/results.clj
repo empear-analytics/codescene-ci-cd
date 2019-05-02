@@ -1,4 +1,4 @@
-(ns codescene-gitlab.results
+(ns codescene-ci-cd.results
   (:require [clojure.java.io :as io]
             [clojure.string :as string]))
 

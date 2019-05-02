@@ -1,4 +1,4 @@
-(ns codescene-gitlab.gitlab-api
+(ns codescene-ci-cd.gitlab-api
   "Wraps the gitlab http API"
   (:require [clj-http.client :as http]))
 

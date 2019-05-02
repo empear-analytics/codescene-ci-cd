@@ -1,4 +1,4 @@
-# codescene-gitlab
+# codescene-ci-cd
 
 FIXME: description
 
@@ -10,7 +10,7 @@ Download from http://example.com/FIXME.
 
 FIXME: explanation
 
-    $ java -jar codescene-gitlab-0.1.0-standalone.jar [args]
+    $ java -jar codescene-ci-cd-0.1.0-standalone.jar [args]
 
 ## Options
 

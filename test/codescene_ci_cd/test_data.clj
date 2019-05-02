@@ -1,4 +1,4 @@
-(ns codescene-gitlab.test-data
+(ns codescene-ci-cd.test-data
   (:require [clojure.test :refer :all]))
 
 (def test-options

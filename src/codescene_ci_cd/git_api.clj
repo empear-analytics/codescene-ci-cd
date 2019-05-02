@@ -1,4 +1,4 @@
-(ns codescene-gitlab.git-api
+(ns codescene-ci-cd.git-api
   "Wraps the git command-line API"
   (:require [clojure.java.shell :as shell]
             [clojure.string :as string]))

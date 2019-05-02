@@ -1,6 +1,6 @@
-(ns codescene-gitlab.delta-analysis
-  (:require [codescene-gitlab.codescene-api :as codescene]
-            [codescene-gitlab.git-api :as git]))
+(ns codescene-ci-cd.delta-analysis
+  (:require [codescene-ci-cd.codescene-api :as codescene]
+            [codescene-ci-cd.git-api :as git]))
 
 (defn- commit-range [from-commit to-commit log-fn]
   (log-fn (format "Get commits from %s to %s..." from-commit to-commit))

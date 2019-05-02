@@ -1,11 +1,11 @@
-(ns codescene-gitlab.core
+(ns codescene-ci-cd.core
   "Contains the entrypoint to the app, including argument parsing and validation"
   (:require [clojure.string :as string]
             [clojure.tools.cli :as cli]
-            [codescene-gitlab.delta-analysis :as delta-analysis]
-            [codescene-gitlab.gitlab-api :as gitlab]
-            [codescene-gitlab.github-api :as github]
-            [codescene-gitlab.results :as results]
+            [codescene-ci-cd.delta-analysis :as delta-analysis]
+            [codescene-ci-cd.gitlab-api :as gitlab]
+            [codescene-ci-cd.github-api :as github]
+            [codescene-ci-cd.results :as results]
             [clojure.java.io :as io]
             [clojure.data.json :as json])
   (:gen-class))
@@ -52,7 +52,7 @@
    [nil "--http-timeout TIMEOUT-MS" "Timeout for http API calls" :parse-fn #(Integer/parseInt %)]])
 
 (defn- usage [options-summary]
-  (->> ["Usage: codescene-gitlab [options]"
+  (->> ["Usage: codescene-ci-cd [options]"
         "Options:"
         options-summary]
        (string/join \newline)))

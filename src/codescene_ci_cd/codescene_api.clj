@@ -1,4 +1,4 @@
-(ns codescene-gitlab.codescene-api
+(ns codescene-ci-cd.codescene-api
   "Wraps the http API to CodeScene delta analysis"
   (:require [clojure.string :as string]
             [clj-http.client :as http]))

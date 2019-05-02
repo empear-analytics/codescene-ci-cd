@@ -1,4 +1,4 @@
-(ns codescene-gitlab.github-api
+(ns codescene-ci-cd.github-api
   "Wraps the github http API"
   (:require [clj-http.client :as http]
             [clojure.data.json :as json]))

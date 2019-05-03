@@ -3,7 +3,7 @@
             [clojure.string :as string]))
 
 (defn- url-parts [url]
-  (let [java-url (io/as-url url)]
+  (when-let [java-url (io/as-url url)]
     {:protocol (.getProtocol java-url)
      :host     (.getHost java-url)
      :port     (.getPort java-url)}))

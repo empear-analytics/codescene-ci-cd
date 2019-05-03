@@ -14,41 +14,52 @@
           api-url project-id merge-request-iid note-id))
 
 (defn get-merge-request-notes [api-url api-token project-id merge-request-iid timeout]
-  (:body (http/get (notes-url api-url project-id merge-request-iid)
-                   {:headers (header-with-pat api-token)
-                    :as      :json
-                    :socket-timeout timeout
-                    :conn-timeout timeout})))
+  "Returns a map of id->comment"
+  (->> (:body (http/get (notes-url api-url project-id merge-request-iid)
+                    {:headers        (header-with-pat api-token)
+                     :as             :json
+                     :socket-timeout timeout
+                     :conn-timeout   timeout}))
+       (map (fn [x] [(:id x) (:body x)]))
+       (into {})))
 
 (defn get-merge-request-note [api-url api-token project-id merge-request-iid note-id timeout]
-  (:body (http/get (note-url api-url project-id merge-request-iid note-id)
-                   {:headers (header-with-pat api-token)
-                    :as      :json
-                    :socket-timeout timeout
-                    :conn-timeout timeout})))
+  "Gets a comment text by id"
+  (->> (:body (http/get (note-url api-url project-id merge-request-iid note-id)
+                    {:headers        (header-with-pat api-token)
+                     :as             :json
+                     :socket-timeout timeout
+                     :conn-timeout   timeout}))
+       :body))
 
 (defn delete-merge-request-note [api-url api-token project-id merge-request-iid note-id timeout]
+  "Deletes a comment by id, returns true if succesful"
   (:body (http/delete (note-url api-url project-id merge-request-iid note-id)
                       {:headers (header-with-pat api-token)
                        :as      :json
                        :socket-timeout timeout
-                       :conn-timeout timeout})))
+                       :conn-timeout timeout}))
+  true)
 
 (defn create-merge-request-note [api-url api-token project-id merge-request-iid text timeout]
-  (:body (http/post (notes-url api-url project-id merge-request-iid)
-                    {:headers      (header-with-pat api-token)
-                     :query-params {:body text}
-                     :as           :json
-                     :socket-timeout timeout
-                     :conn-timeout timeout})))
+  "Creates comment and returns the comment id"
+  (->> (:body (http/post (notes-url api-url project-id merge-request-iid)
+                     {:headers        (header-with-pat api-token)
+                      :query-params   {:body text}
+                      :as             :json
+                      :socket-timeout timeout
+                      :conn-timeout   timeout}))
+       :id))
 
 (defn update-merge-request-note [api-url api-token project-id merge-request-iid note-id text timeout]
+  "Updates a comment text by id, returns true if succesful"
   (:body (http/put (note-url api-url project-id merge-request-iid note-id)
                    {:headers      (header-with-pat api-token)
                     :query-params {:body text}
                     :as           :json
                     :socket-timeout timeout
-                    :conn-timeout timeout})))
+                    :conn-timeout timeout}))
+  true)
 
 
 (comment

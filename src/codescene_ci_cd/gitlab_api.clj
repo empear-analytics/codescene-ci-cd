@@ -63,9 +63,11 @@
 
 
 (comment
-  (def api-url "http://localhost:8082/api/v4")
-  (def api-token "")
-  (def project-id 1)
-  (get-merge-request-notes api-url api-token project-id 1)
-  (create-merge-request-note api-url api-token project-id 1 "Bla bla bla")
-  (delete-merge-request-note api-url api-token project-id 1 10))
+  (def api-url "https://gitlab.com/api/v4")
+  (def api-token "qQ7GM2tp397Qx4Sid-yz")
+  (def project-id 12148632)
+  (get-merge-request-notes api-url api-token project-id 1 3000)
+  (create-merge-request-note api-url api-token project-id 1 "Bla bla bla" 3000)
+  (update-merge-request-note api-url api-token project-id 1 166512857 "Bla bla blo" 3000)
+  (get-merge-request-note api-url api-token project-id 1 166512857 3000)
+  (delete-merge-request-note api-url api-token project-id 1 166512857 3000))

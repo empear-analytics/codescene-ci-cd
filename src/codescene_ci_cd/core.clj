@@ -152,7 +152,6 @@
       (when-let [result-path (:result-path options)]
         (with-open [wr (io/writer result-path)]
           (.write wr (json/write-str results))))
-      (clojure.pprint/pprint results)
       (when (:create-gitlab-note options)
         (merge-requests/create-gitlab-note options results log-fn))
       (when (:create-github-comment options)

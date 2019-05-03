@@ -6,8 +6,6 @@
 (defn commit-range [from-commit to-commit]
   [from-commit to-commit]
   (let [{:keys [exit out err] :as git-result} (shell/sh "git" "log" "--pretty='%H'" (format "%s..%s" from-commit to-commit))]
-    (clojure.pprint/pprint exit)
-    (clojure.pprint/pprint out)
     (if (= exit 0)
       (->> out
           (#(string/split % #"\n"))

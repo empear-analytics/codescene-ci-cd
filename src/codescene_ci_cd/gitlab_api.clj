@@ -63,6 +63,9 @@
 
 
 (comment
-  (get-merge-request-notes "http://localhost:8082/api/v4" "Q9nE8fxxs5xymf-koUD-" 4 1)
-  (create-merge-request-note "http://localhost:8082/api/v4" "Q9nE8fxxs5xymf-koUD-" 4 1 "Bla bla bla")
-  (delete-merge-request-note "http://localhost:8082/api/v4" "Q9nE8fxxs5xymf-koUD-" 4 1 10))
+  (def api-url "http://localhost:8082/api/v4")
+  (def api-token "")
+  (def project-id 1)
+  (get-merge-request-notes api-url api-token project-id 1)
+  (create-merge-request-note api-url api-token project-id 1 "Bla bla bla")
+  (delete-merge-request-note api-url api-token project-id 1 10))

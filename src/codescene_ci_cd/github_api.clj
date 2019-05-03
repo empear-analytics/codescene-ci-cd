@@ -62,7 +62,7 @@
 
 (comment
   (def api-url "https://api.github.com")
-  (def api-token "2b35a8dbca160f72be2c56e21852955c77ad835b")
+  (def api-token "")
   (def owner "knorrest")
   (def repo "analysis-target")
   (get-pull-request-comments api-url api-token owner repo 1 3000)

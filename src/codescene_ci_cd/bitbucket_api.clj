@@ -43,7 +43,7 @@
 
 (comment
   (def api-url "https://bitbucket.org/api/2.0")
-  (def api-token "QUUnqfwYs3sSKYH2484U")
+  (def api-token "")
   (def user "knorrest")
   (def repo "test1")
   (get-pull-request-comments api-url user api-token repo 1 3000)

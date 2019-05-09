@@ -26,6 +26,7 @@
    [nil "--fail-on-declining-code-health" "Mark Build as Unstable on Code Health Decline" :default false]
    [nil "--create-gitlab-note" "Create Note For Gitlab Merge Request" :default false]
    [nil "--create-github-comment" "Create Comment For GitHub Pull Request" :default false]
+   [nil "--create-bitbucket-comment" "Create Comment For Bitbucket Pull Request" :default false]
    [nil "--log-result" "Log the result (by printing)" :default false]
    ;; Analysis arguments
    [nil "--coupling-threshold-percent THRESHOLD" "Temporal Coupling Threshold (in percent)" :default 75 :parse-fn #(Integer/parseInt %)]
@@ -43,13 +44,13 @@
    [nil "--github-api-token TOKEN" "GitHub API Token"]
    [nil "--github-owner OWNER" "GitHub Repository Owner"]
    [nil "--github-repo REPO" "GitHub Repository Name"]
-   [nil "--github-pull-request-id ID" "GitHub Pull Request ID"]
+   [nil "--github-pull-request-id ID" "GitHub Pull Request ID" :parse-fn #(Integer/parseInt %)]
    ;; BitBucket settings
    [nil "--bitbucket-api-url URL" "BitBucket API URL"]
    [nil "--bitbucket-user USER" "BitBucket User"]
    [nil "--bitbucket-password PASSWORD" "BitBucket Password"]
    [nil "--bitbucket-repo REPO" "BitBucket Repository Name"]
-   [nil "--bitbucket-pull-request-id ID" "BitBucket Pull Request ID"]
+   [nil "--bitbucket-pull-request-id ID" "BitBucket Pull Request ID" :parse-fn #(Integer/parseInt %)]
    ;; General settings
    [nil "--result-path FILENAME" "Path where JSON output is generated"]
    [nil "--http-timeout TIMEOUT-MS" "Timeout for http API calls" :parse-fn #(Integer/parseInt %)]])

@@ -1,14 +1,19 @@
 (ns codescene-ci-cd.delta-analysis
   (:require [codescene-ci-cd.codescene-api :as codescene]
-            [codescene-ci-cd.git-api :as git]))
+            [codescene-ci-cd.git-api :as git]
+            [clojure.string :as string]))
 
 (defn- commit-range [from-commit to-commit log-fn]
   (log-fn (format "Get commits from %s to %s..." from-commit to-commit))
   (git/commit-range from-commit to-commit))
 
 (defn- run-delta-analysis-and-attach-info [config commits log-fn]
-  (-> (codescene/run-delta-analysis-on-commits config commits log-fn)
-      (assoc :title (first commits) :commits commits)))
+  (let [{:keys [codescene-delta-analysis-url codescene-user codescene-password codescene-repository
+                codescene-coupling-threshold-percent http-timeout]} config]
+    (log-fn (format "Running delta analysis on commits (%s) in repository %s." (string/join "," commits) codescene-repository))
+    (-> (codescene/run-delta-analysis-on-commits codescene-delta-analysis-url codescene-user codescene-password codescene-repository
+                                                 codescene-coupling-threshold-percent commits http-timeout)
+       (assoc :title (first commits) :commits commits))))
 
 (defn- run-delta-analysis-on-individual-commits [config commits log-fn]
   (log-fn (format "Starting delta analysis on %d individual commit(s)..." (count commits)))
@@ -26,7 +31,7 @@
         violates-goal (get-in entry [:result :quality-gates :violates-goal])]
     (if (and fail-on-failed-goal violates-goal)
       (do
-        (log-fn "Failed Quality Gate : the analysis detects a failed goal. Marking build as unstable.")
+        (log-fn "Failed Quality Gate: The analysis detects a failed goal.")
         (fail entry :unstable :goal-has-failed))
       entry)))
 
@@ -35,7 +40,7 @@
         degrades-in-code-health (get-in entry [:result :quality-gates :degrades-in-code-health])]
     (if (and fail-on-declining-code-health degrades-in-code-health)
       (do
-        (log-fn "Failed Quality Gate : the analysis detects a decline in Code Health. Marking build as unstable.")
+        (log-fn "Failed Quality Gate: The analysis detects a decline in Code Health.")
         (fail entry :unstable :code-health-declined))
       entry)))
 
@@ -44,7 +49,7 @@
         risk (get-in entry [:result :risk])]
     (if (and fail-on-high-risk (>= risk risk-threshold))
       (do
-        (log-fn (format "Delta analysis result with risk %d: hits the risk threshold (%d). Marking build as unstable."
+        (log-fn (format "Delta analysis result with risk %d: hits the risk threshold (%d)."
                           risk risk-threshold))
         (fail entry :unstable :hits-risk-threshold))
       entry)))

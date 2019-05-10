@@ -12,22 +12,21 @@
 (def ^:private cli-options
   [["-h" "--help"]
    ;; Codescene access settings
-   [nil "--delta-analysis-url URL" "Project Delta Analysis URL"]
-   ["-u" "--user USER" "CodeScene User"]
-   ["-p" "--password PWD" "CodeScene Password"]
-   ["-r" "--repository REPO" "Repository"]
+   [nil "--codescene-delta-analysis-url URL" "CodeScene Delta Analysis URL"]
+   ["-u" "--codescene-user USER" "CodeScene User"]
+   ["-p" "--codescene-password PWD" "CodeScene Password"]
+   ["-r" "--codescene-repository REPO" "CodeScene Repository"]
    ;; Flags
    [nil "--analyze-individual-commits" "Individual Commits" :default false]
    [nil "--analyze-branch-diff" "By Branch" :default false]
-   [nil "--use-biomarkers" "Use Biomarkers" :default false]
-   [nil "--pass-on-failed-analysis" "Build Success on Failed Analysis" :default false]
-   [nil "--fail-on-high-risk" "Mark as Unstable on High Risk" :default false]
-   [nil "--fail-on-failed-goal" "Mark Build as Unstable on Failed Goals" :default false]
-   [nil "--fail-on-declining-code-health" "Mark Build as Unstable on Code Health Decline" :default false]
+   [nil "--pass-on-failed-analysis" "Pass Build on Failed Analysis" :default false]
+   [nil "--fail-on-high-risk" "Fail Build on High Risk" :default false]
+   [nil "--fail-on-failed-goal" "Fail Build on Failed Goals" :default false]
+   [nil "--fail-on-declining-code-health" "Fail Build on Code Health Decline" :default false]
    [nil "--create-gitlab-note" "Create Note For Gitlab Merge Request" :default false]
    [nil "--create-github-comment" "Create Comment For GitHub Pull Request" :default false]
    [nil "--create-bitbucket-comment" "Create Comment For Bitbucket Pull Request" :default false]
-   [nil "--log-result" "Log the result (by printing)" :default false]
+   [nil "--[no-]log-result" "Log the result (by printing)" :default true]
    ;; Analysis arguments
    [nil "--coupling-threshold-percent THRESHOLD" "Temporal Coupling Threshold (in percent)" :default 75 :parse-fn #(Integer/parseInt %)]
    [nil "--risk-threshold THRESHOLD" "Risk Threshold" :default 9 :parse-fn #(Integer/parseInt %)]
@@ -80,7 +79,7 @@
 
 (defn- validate-options [options]
   (let [{:keys [analyze-individual-commits analyze-branch-diff create-gitlab-note create-github-comment create-bitbucket-comment
-                delta-analysis-url user password repository
+                codescene-delta-analysis-url codescene-user codescene-password codescene-repository
                 previous-commit current-commit base-revision
                 gitlab-api-url gitlab-api-token gitlab-project-id gitlab-merge-request-iid
                 github-api-url github-api-token github-owner github-repo github-pull-request-id
@@ -88,10 +87,10 @@
     (filter
       some?
       (concat
-        (when-not (some? delta-analysis-url) ["Delta analysis URL not specified"])
-        (when-not (some? user) ["Codescene user not specified"])
-        (when-not (some? password) ["Codescene password not specified"])
-        (when-not (some? repository) ["Codescene repository not specified"])
+        (when-not (some? codescene-delta-analysis-url) ["CodeScene delta analysis URL not specified"])
+        (when-not (some? codescene-user) ["Codescene user not specified"])
+        (when-not (some? codescene-password) ["Codescene password not specified"])
+        (when-not (some? codescene-repository) ["Codescene repository not specified"])
         (when analyze-individual-commits
           [(when-not (some? current-commit) "Current commit not specified")
            (when-not (some? previous-commit) "Previous commit not specified")])
@@ -174,12 +173,11 @@
         (exit ok? exit-message log-fn)))))
 
 (comment
-  (def options {:use-biomarkers true,
-                :analyze-individual-commits false,
-                :repository "cmake-project-template",
+  (def options {:analyze-individual-commits false,
+                :codescene-repository "cmake-project-template",
                 :create-gitlab-note true,
-                :password "0bca8fd9-c137-47c7-9c2b-98f6fbc2cd1c",
-                :delta-analysis-url "http://localhost:3005/projects/2/delta-analysis",
+                :codescene-password "",
+                :codescene-delta-analysis-url "http://localhost:3005/projects/2/delta-analysis",
                 :analyze-branch-diff true,
                 :fail-on-declining-code-health true,
                 :risk-threshold 7,
@@ -188,10 +186,10 @@
                 :coupling-threshold-percent 45,
                 :gitlab-merge-request-iid 1,
                 :gitlab-project-id 4,
-                :gitlab-api-token "Q9nE8fxxs5xymf-koUD-",
+                :gitlab-api-token "",
                 :current-commit "96539487a532cadc1f9177cf4b6b1a61bad88049",
                 :gitlab-api-url "http://gitlab:80/api/v4",
-                :user "bot",
+                :codescene-user "bot",
                 :fail-on-failed-goal true,
                 :fail-on-high-risk true})
   (def results (binding [clojure.java.shell/*sh-dir* d] (run-analysis-and-handle-result options println))))

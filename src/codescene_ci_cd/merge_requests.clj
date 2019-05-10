@@ -33,7 +33,7 @@
         comment-ids (find-codescene-comment-ids comments)
         markdown (results/as-markdown results options)]
     (doseq [comment-id comment-ids]
-      (log-fn (format "Remove old GitLab Note with id %d for merge request..." comment-id))
+      (log-fn (format "Remove old GitHub Comment with id %d for merge request..." comment-id))
       (github/delete-pull-request-comment github-api-url github-api-token github-owner github-repo comment-id http-timeout))
     (github/create-pull-request-comment github-api-url github-api-token github-owner github-repo github-pull-request-id
                                         (string/join \newline [identifier-comment markdown]) http-timeout)))
@@ -45,7 +45,7 @@
         comment-ids (find-codescene-comment-ids comments)
         markdown (results/as-markdown results options)]
     (doseq [comment-id comment-ids]
-      (log-fn (format "Remove old GitLab Note with id %d for merge request..." comment-id))
+      (log-fn (format "Remove old Bitbucket Comment with id %d for merge request..." comment-id))
       (bitbucket/delete-pull-request-comment bitbucket-api-url bitbucket-user bitbucket-password bitbucket-repo bitbucket-pull-request-id comment-id http-timeout))
     (bitbucket/create-pull-request-comment bitbucket-api-url bitbucket-user bitbucket-password bitbucket-repo bitbucket-pull-request-id
                                         (string/join \newline [identifier-comment markdown]) http-timeout)))

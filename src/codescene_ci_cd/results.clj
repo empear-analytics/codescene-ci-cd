@@ -23,23 +23,26 @@
 (defn- newline-between [coll]
   (string/join \newline coll))
 
+(defn- comma-between [coll]
+  (string/join "," coll))
+
 (defn- md-table-row [coll]
   (wrap-and-join "|" coll))
 
 (defn- warning->markdown [warning]
   (let [{:keys [category details]} warning]
-    (linebreak-between [(format "Category: %s" category) details])))
+    (linebreak-between (concat [(format "Category: %s" category)] details))))
 
 (defn- warning->text [warning]
   (let [{:keys [category details]} warning]
-    (newline-between [(str \tab \tab "Category:" \space category)
-                      (str \tab \tab details)])))
+    (newline-between (concat [(str \tab \tab "Category:" \space category)]
+                             (map #(str \tab \tab %) details)))))
 
 (defn- entry->markdown-table [entry options url-parts]
   (let [{:keys [risk-threshold fail-on-failed-goal fail-on-declining-code-health]} options
         {:keys [protocol host port]} url-parts
         {:keys [title view result commits goal-has-failed code-health-declined hits-risk-threshold]} entry
-        {:keys [risk description warnings]} result
+        {:keys [risk description warnings improvements]} result
         view-url (format "%s//%s:%d%s" protocol host port view)]
     (concat
       [(md-table-row ["" (bold "CodeScene Delta Analysis Results")])]
@@ -52,13 +55,15 @@
         [(md-table-row [(bold "Commits") (linebreak-between commits)])])
       (when (seq warnings)
         [(md-table-row [(bold "Warnings") (linebreak-between (map warning->markdown warnings))])])
+      (when (seq improvements)
+        [(md-table-row [(bold "Improvements") (linebreak-between improvements)])])
       [\newline])))
 
 (defn- entry->text [entry options url-parts]
   (let [{:keys [risk-threshold fail-on-failed-goal fail-on-declining-code-health]} options
         {:keys [protocol host port]} url-parts
         {:keys [title view result commits goal-has-failed code-health-declined hits-risk-threshold]} entry
-        {:keys [risk description warnings]} result
+        {:keys [risk description warnings improvements]} result
         view-url (format "%s//%s:%d%s" protocol host port view)]
     (concat
 
@@ -68,9 +73,11 @@
         [(str \tab "Quality Gates:" \space (if (or goal-has-failed code-health-declined) "Fail" "OK"))])
       [(str \tab "Description:" \space description)]
       (when (seq commits)
-        [(str \tab "Commits:" \space (newline-between commits))])
+        [(str \tab "Commits:" \space (comma-between commits))])
       (when (seq warnings)
         [(str \tab "Warnings:" \newline (newline-between (map warning->text warnings)))])
+      (when (seq improvements)
+        [(str \tab "Improvements:" \newline (newline-between (map #(str \tab \tab %) improvements)))])
       [\newline])))
 
 (defn as-markdown [entries options]

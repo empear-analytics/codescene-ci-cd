@@ -6,5 +6,5 @@
                  [clj-http "3.7.0"]
                  [org.clojure/tools.cli "0.4.2"]]
   :main ^:skip-aot codescene-ci-cd.core
-  :target-path "target/%s"
+  :uberjar-name "codescene-ci-cd.standalone.jar"
   :profiles {:uberjar {:aot :all}})

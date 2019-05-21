@@ -18,12 +18,11 @@ cache:
   - "$HOME/.m2"
 deploy:
   provider: releases
-  file_glob: true
-  file:
-  - target/uberjar/codescene-ci-cd-*.standalone.jar
-  on:
-    tags: true
-    repo: empear-analytics/codescene-ci-cd
   skip_cleanup: true
   api-key:
     secure: iqyDwfzj9zNqpxkmfNI2Mq+qvrmBezfNZLGdq+iVt0SvdUgrIZtSHd11Nt9DHvk4LZ0brObf1IxW96M8OhXjecYE7IlYKVeAQz4xzdY3SsQSVnVTOdYzx0EcAerYOsbyI3YkxFd9+W5V7WoLEiw9Cu4nBXCCVCBm1UsyZsYOv81A+fw0EKQIfLGUErP9aN+2SUByO73ST51AiINMGBVN6xcy8p1FEUapvm/oyTY+tU9FgQIckVcyG3O09knw2z5k0Wc0kQEcgdXtb0GPIFs6JVcWnSkZR6zIu/zKEvWbPtG3oG6enDqi8TCpZk6myc7O4ryUhRY4NBbRs2iuTOrs9MruovHIh9jom7ylaAHaVEhvzXAznO4dY+1zLtWT1NlHM8bL/iUeqYxmiIGwE/9je7o7b5mlSr01DzXLo0cPaQOZV1v4okAdboHGVKN+Xq94lmZPMfmOO68WdZDWM/Amv89uNNREkza+O1Dy9uW+P/2kaXw02mNurK8skymrJ/Rjht+wJbSNA/L6sB+Zs/TQ0xYpiQsHeE2XLXSP4KB+6SSfF5NtlDIMv1sPeFdLF/uyhAfAYIiHvCJDZX0gpFMHBDgQWOsSLJsUQJvZC4sODhHyAI1whSy002XiB06dutkpPiMCxSALLFpjcAk8CWnFekJnf5TJmV/5c9t6dsknatc=
+  file:
+  - "target/codescene-ci-cd.standalone.jar"
+  on:
+    tags: true
+    repo: empear-analytics/codescene-ci-cd

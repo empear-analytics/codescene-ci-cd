@@ -1,0 +1,57 @@
+
+.template-codescene-ci-cd-on-push:
+  only: 
+  - pushes
+  image:
+    name: empear/codescene-ci-cd
+    entrypoint: [""]
+  script:
+    - export PREVIOUS_COMMIT=$(git rev-parse HEAD^)
+    - codescene-ci-cd.sh
+      --codescene-delta-analysis-url $CODESCENE_URL$CODESCENE_DELTA_ANALYSIS_URL
+      --codescene-user $CODESCENE_USER
+      --codescene-password $CODESCENE_PASSWORD
+      --codescene-repository $CI_PROJECT_NAME
+      --pass-on-failed-analysis
+      --fail-on-failed-goal
+      --fail-on-declining-code-health
+      --analyze-individual-commits
+      --risk-threshold $CODESCENE_RISK_THRESHOLD
+      --coupling-threshold-percent $CODESCENE_COUPLING_THRESHOLD_PERCENT
+      --current-commit $CI_COMMIT_SHA
+      --previous-commit $PREVIOUS_COMMIT
+      --http-timeout $CODESCENE_TIMEOUT
+      --log-result
+
+.template-codescene-ci-cd-on-merge-request:
+  only:
+  - merge_requests
+  image:
+    name: empear/codescene-ci-cd
+    entrypoint: [""]
+  variables:
+    GIT_DEPTH: ""
+  script:
+    - codescene-ci-cd.sh
+      --codescene-delta-analysis-url $CODESCENE_URL$CODESCENE_DELTA_ANALYSIS_URL
+      --codescene-user $CODESCENE_USER
+      --codescene-password $CODESCENE_PASSWORD
+      --codescene-repository $CI_PROJECT_NAME
+      --pass-on-failed-analysis
+      --fail-on-failed-goal
+      --fail-on-declining-code-health
+      --analyze-branch-diff
+      --risk-threshold $CODESCENE_RISK_THRESHOLD
+      --coupling-threshold-percent $CODESCENE_COUPLING_THRESHOLD_PERCENT
+      --create-gitlab-note
+      --current-commit $CI_COMMIT_SHA
+      --base-revision origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME
+      --gitlab-api-url $CI_API_V4_URL
+      --gitlab-api-token $CODESCENE_GITLAB_API_TOKEN
+      --gitlab-project-id $CI_MERGE_REQUEST_PROJECT_ID
+      --gitlab-merge-request-iid $CI_MERGE_REQUEST_IID
+      --log-result
+
+
+
+

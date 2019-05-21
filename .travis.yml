@@ -1,33 +1,28 @@
 language: clojure
 jdk:
-  - oraclejdk8
-
+- oraclejdk8
 addons:
   apt:
     sources:
-      - git-core
+    - git-core
     packages:
-      - git
-
+    - git
 branches:
   only:
-    - master
-    - /^v.*$/
-    
+  - master
+  - "/^v.*$/"
 script: lein do uberjar, test
-
 cache:
   apt: true
   directories:
-  - $HOME/.m2
-
+  - "$HOME/.m2"
 deploy:
   provider: releases
-  api_key:
-    secure: H7KWbAFB+OlZuOfnw5h7rVDZ/v2Cohx4wy0AP9Qtbdzf4poJAy13USqvZ7hyfYknUYOc/4DprfqPcp+VYZDlm8S8dA4+Zm5rt8UwnUEVcJGzoj4Yschz0o6tSehuPwM3KR/PD1oxXsqfr6qakCxEhxI/cT1k0hJpA2/vUenu6tHmXRHOKk2dPa6GlNC7MeYeOHvFiw4OXp2XNvRERRQ9RHX81pdvnpvJNawc6GfT80OQ8Xp3CfxG6VWi8CqMi+ElZXDEWe298JuVZdtf9wwtC06LKtOx6vYYq8u2w26qa3S/fQPL8Mz7zXj51y7JpgXyEVFugDnIx8fQrgP+eoDsQHJ0/YveUB603JiJsgm0R8WAch9kRLqsx2zFfoEci8zQD4F1FXU/hwKog3WHk70CLFYI+KgTWAZ5CSTS5L+sutxO7h83+DUyNJzYlGCbJfSQtz2Og4dMgeXdCvpFuYCU/i+50ZmiuvF/BkwkcrwT1FCbeDQpPLArYtTVHBXfzrgQZsfTfz9zgxVBnb8N/cbiFGsWvweJ4IYCsYiJctK/RlFWrwPa0pNOOXVsDVfwl3MIE9GHokdPC8aReyPPwfoYd2+iQ91jiJB6/Wf51vHULx0HHyQQDvjwSNecznx821LJiha1VEUNMZdrJS6Y7mUDAC271OyCoOvIt5XM1a23sdo=
   file_glob: true
   file:
-    - target/uberjar/codescene-ci-cd-*.standalone.jar
+  - target/uberjar/codescene-ci-cd-*.standalone.jar
   on:
     tags: true
     repo: empear-analytics/codescene-ci-cd
+  api-key:
+    secure: iqyDwfzj9zNqpxkmfNI2Mq+qvrmBezfNZLGdq+iVt0SvdUgrIZtSHd11Nt9DHvk4LZ0brObf1IxW96M8OhXjecYE7IlYKVeAQz4xzdY3SsQSVnVTOdYzx0EcAerYOsbyI3YkxFd9+W5V7WoLEiw9Cu4nBXCCVCBm1UsyZsYOv81A+fw0EKQIfLGUErP9aN+2SUByO73ST51AiINMGBVN6xcy8p1FEUapvm/oyTY+tU9FgQIckVcyG3O09knw2z5k0Wc0kQEcgdXtb0GPIFs6JVcWnSkZR6zIu/zKEvWbPtG3oG6enDqi8TCpZk6myc7O4ryUhRY4NBbRs2iuTOrs9MruovHIh9jom7ylaAHaVEhvzXAznO4dY+1zLtWT1NlHM8bL/iUeqYxmiIGwE/9je7o7b5mlSr01DzXLo0cPaQOZV1v4okAdboHGVKN+Xq94lmZPMfmOO68WdZDWM/Amv89uNNREkza+O1Dy9uW+P/2kaXw02mNurK8skymrJ/Rjht+wJbSNA/L6sB+Zs/TQ0xYpiQsHeE2XLXSP4KB+6SSfF5NtlDIMv1sPeFdLF/uyhAfAYIiHvCJDZX0gpFMHBDgQWOsSLJsUQJvZC4sODhHyAI1whSy002XiB06dutkpPiMCxSALLFpjcAk8CWnFekJnf5TJmV/5c9t6dsknatc=

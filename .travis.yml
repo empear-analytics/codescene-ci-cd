@@ -13,9 +13,19 @@ branches:
   only:
     - master
     
-script: lein test
+script: lein do uberjar, test
 
 cache:
   apt: true
   directories:
   - $HOME/.m2
+
+deploy:
+  provider: releases
+  api_key:
+    secure: H7KWbAFB+OlZuOfnw5h7rVDZ/v2Cohx4wy0AP9Qtbdzf4poJAy13USqvZ7hyfYknUYOc/4DprfqPcp+VYZDlm8S8dA4+Zm5rt8UwnUEVcJGzoj4Yschz0o6tSehuPwM3KR/PD1oxXsqfr6qakCxEhxI/cT1k0hJpA2/vUenu6tHmXRHOKk2dPa6GlNC7MeYeOHvFiw4OXp2XNvRERRQ9RHX81pdvnpvJNawc6GfT80OQ8Xp3CfxG6VWi8CqMi+ElZXDEWe298JuVZdtf9wwtC06LKtOx6vYYq8u2w26qa3S/fQPL8Mz7zXj51y7JpgXyEVFugDnIx8fQrgP+eoDsQHJ0/YveUB603JiJsgm0R8WAch9kRLqsx2zFfoEci8zQD4F1FXU/hwKog3WHk70CLFYI+KgTWAZ5CSTS5L+sutxO7h83+DUyNJzYlGCbJfSQtz2Og4dMgeXdCvpFuYCU/i+50ZmiuvF/BkwkcrwT1FCbeDQpPLArYtTVHBXfzrgQZsfTfz9zgxVBnb8N/cbiFGsWvweJ4IYCsYiJctK/RlFWrwPa0pNOOXVsDVfwl3MIE9GHokdPC8aReyPPwfoYd2+iQ91jiJB6/Wf51vHULx0HHyQQDvjwSNecznx821LJiha1VEUNMZdrJS6Y7mUDAC271OyCoOvIt5XM1a23sdo=
+  file:
+    - target/uberjar/codescene-ci-cd-$TRAVIS_TAG.standalone.jar
+  on:
+    tags: true
+    repo: empear-analytics/codescene-ci-cd

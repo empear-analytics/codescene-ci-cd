@@ -1,5 +1,9 @@
 
-.template-codescene-ci-cd-on-push:
+stages:
+  - codescene-ci-cd
+
+run-codescene-ci-cd-on-push:
+  stage: codescene-ci-cd
   only: 
   - pushes
   image:
@@ -23,7 +27,8 @@
       --http-timeout $CODESCENE_TIMEOUT
       --log-result
 
-.template-codescene-ci-cd-on-merge-request:
+run-codescene-ci-cd-on-merge-request:
+  stage: codescene-ci-cd
   only:
   - merge_requests
   image:

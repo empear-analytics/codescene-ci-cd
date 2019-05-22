@@ -5,7 +5,7 @@ ENV PATH /opt/codescene-ci-cd:$PATH
 
 WORKDIR /opt/codescene-ci-cd
 
-COPY target/uberjar/codescene-ci-cd-standalone.jar .
+COPY target/codescene-ci-cd.standalone.jar .
 
 COPY codescene-ci-cd.sh .
 RUN chmod 755 codescene-ci-cd.sh

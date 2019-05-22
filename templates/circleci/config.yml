@@ -12,7 +12,7 @@ jobs:
             if [[ -z $CIRCLE_PULL_REQUEST ]] ; then 
               export PREVIOUS_COMMIT=$(git rev-parse HEAD^);
               codescene-ci-cd.sh
-                --codescene-delta-analysis-url $CODESCENE_URL$CODESCENE_DELTA_ANALYSIS_URL
+                --codescene-delta-analysis-url CODESCENE_DELTA_ANALYSIS_URL
                 --codescene-user $CODESCENE_USER
                 --codescene-password $CODESCENE_PASSWORD
                 --codescene-repository $CIRCLE_PROJECT_REPONAME
@@ -24,13 +24,13 @@ jobs:
                 --risk-threshold $CODESCENE_RISK_THRESHOLD    
                 --current-commit $CIRCLE_SHA1
                 --previous-commit $PREVIOUS_COMMIT
-                --http-timeout 10000
+                --http-timeout $CODESCENE_HTTP_TIMEOUT
                 --log-result;
             else
               export PREVIOUS_COMMIT=$(git rev-parse HEAD^);
               export PULL_REQUEST_ID=${CIRCLE_PULL_REQUEST##*/};
               codescene-ci-cd.sh
-                --codescene-delta-analysis-url $CODESCENE_URL$CODESCENE_DELTA_ANALYSIS_URL
+                --codescene-delta-analysis-url $CODESCENE_DELTA_ANALYSIS_URL
                 --codescene-user $CODESCENE_USER
                 --codescene-password $CODESCENE_PASSWORD
                 --codescene-repository $CIRCLE_PROJECT_REPONAME
@@ -43,12 +43,12 @@ jobs:
                 --current-commit $CIRCLE_SHA1
                 --base-revision master
                 --create-github-comment
-                --github-api-url $GITHUB_API_URL
-                --github-api-token $GITHUB_API_TOKEN
+                --github-api-url $CODESCENE_GITHUB_API_URL
+                --github-api-token $CODESCENE_GITHUB_API_TOKEN
                 --github-owner $CIRCLE_PROJECT_USERNAME
                 --github-repo $CIRCLE_PROJECT_REPONAME
                 --github-pull-request-id $PULL_REQUEST_ID
-                --http-timeout 10000
+                --http-timeout $CODESCENE_HTTP_TIMEOUT
                 --log-result;
             fi  
 

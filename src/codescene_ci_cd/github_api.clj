@@ -22,24 +22,35 @@
        (map (fn [x] [(:id x) (:body x)]))
        (into {})))
 
-(defn delete-pull-request-comment [api-url api-token owner repo comment-id timeout]
+(defn delete-comment [comment-url api-token timeout]
   "Deletes a comment by id, returns true if succesful"
-  (:body (http/delete (comment-url api-url owner repo comment-id)
+  (:body (http/delete comment-url
                       {:headers (header-with-pat api-token)
                        :as      :json
                        :socket-timeout timeout
                        :conn-timeout timeout}))
   true)
 
+(defn delete-pull-request-comment [api-url api-token owner repo comment-id timeout]
+  "Deletes a comment by id, returns true if succesful"
+  (let [comment-url (comment-url api-url owner repo comment-id)]
+    (delete-comment comment-url api-token timeout))
+  true)
+
+(defn create-comment [comments-url api-token text timeout]
+  "Creates comment and returns the comment id"
+  (->> (:body (http/post comments-url
+                         {:headers        (header-with-pat api-token)
+                          :body           (clojure.data.json/write-str {:body text})
+                          :as             :json
+                          :socket-timeout timeout
+                          :conn-timeout   timeout}))
+       :id))
+
 (defn create-pull-request-comment [api-url api-token owner repo pull-request-id text timeout]
   "Creates comment and returns the comment id"
-  (->> (:body (http/post (comments-url api-url owner repo pull-request-id)
-                     {:headers        (header-with-pat api-token)
-                      :body           (clojure.data.json/write-str {:body text})
-                      :as             :json
-                      :socket-timeout timeout
-                      :conn-timeout   timeout}))
-       :id))
+  (let [comments-url (comments-url api-url owner repo pull-request-id)]
+    (create-comment comments-url api-token text timeout)))
 
 (defn get-pull-request-comment [api-url api-token owner repo comment-id timeout]
   "Gets a comment text by id"

@@ -21,7 +21,7 @@
      (with-gitlab-no-op-redefs
        (with-redefs [codescene/run-delta-analysis-on-commits (constantly test-data/codescene-reply)
                      git/commit-range (fn [from-commit to-commit] [to-commit])]
-         (let [[ok? exit-message] (run-analysis-and-handle-result test-data/test-options println)]
+         (let [[ok? exit-message] (run-analysis-and-handle-result test-data/test-options)]
            (is (= true ok?))
            (is (= golden-copy/analysis-results)))))))
 
@@ -30,10 +30,10 @@
        (with-redefs [codescene/run-delta-analysis-on-commits (throwing-fn)
                      git/commit-range (fn [from-commit to-commit] [to-commit])]
          (let [options (assoc test-data/test-options :pass-on-failed-analysis true)
-               [ok? exit-message] (run-analysis-and-handle-result options println)]
+               [ok? exit-message] (run-analysis-and-handle-result options)]
            (is (= true ok?)))
          (let [options (assoc test-data/test-options :pass-on-failed-analysis false)
-               [ok? exit-message] (run-analysis-and-handle-result options println)]
+               [ok? exit-message] (run-analysis-and-handle-result options)]
            (is (= false ok?)))))))
 
   (testing "Optionally fail on degrading code health."
@@ -41,10 +41,10 @@
       (with-redefs [codescene/run-delta-analysis-on-commits (constantly test-data/codescene-degrading-code-health-reply)
                     git/commit-range (fn [from-commit to-commit] [to-commit])]
         (let [options (assoc test-data/test-options :fail-on-declining-code-health true)
-              [ok? exit-message] (run-analysis-and-handle-result options println)]
+              [ok? exit-message] (run-analysis-and-handle-result options)]
           (is (= false ok?)))
         (let [options (assoc test-data/test-options :fail-on-declining-code-health false)
-              [ok? exit-message] (run-analysis-and-handle-result options println)]
+              [ok? exit-message] (run-analysis-and-handle-result options)]
           (is (= true ok?))))))
 
   (testing "Optionally fail on violated goal."
@@ -52,22 +52,22 @@
       (with-redefs [codescene/run-delta-analysis-on-commits (constantly test-data/codescene-failed-goal-reply)
                     git/commit-range (fn [from-commit to-commit] [to-commit])]
         (let [options (assoc test-data/test-options :fail-on-failed-goal true)
-              [ok? exit-message] (run-analysis-and-handle-result options println)]
+              [ok? exit-message] (run-analysis-and-handle-result options)]
           (is (= false ok?)))
         (let [options (assoc test-data/test-options :fail-on-failed-goal false)
-              [ok? exit-message] (run-analysis-and-handle-result options println)]
+              [ok? exit-message] (run-analysis-and-handle-result options)]
           (is (= true ok?))))))
 
   (testing "Pass when no commits."
     (with-gitlab-no-op-redefs
       (with-redefs [codescene/run-delta-analysis-on-commits (constantly test-data/codescene-failed-goal-reply)
                     git/commit-range (fn [from-commit to-commit] [])]
-        (let [[ok? exit-message] (run-analysis-and-handle-result test-data/test-options println)]
+        (let [[ok? exit-message] (run-analysis-and-handle-result test-data/test-options)]
           (is (= true ok?)))
         (let [options (-> test-data/test-options
                           (assoc :analyze-branch-diff false)
                           (assoc :analyze-individual-commits true))
-              [ok? exit-message] (run-analysis-and-handle-result options println)]
+              [ok? exit-message] (run-analysis-and-handle-result options)]
           (is (= true ok?)))))))
 
 

@@ -2,4 +2,3 @@ version: '2'
 services:
   codescene-ci-cd:
     build: . 
-    working_dir: /

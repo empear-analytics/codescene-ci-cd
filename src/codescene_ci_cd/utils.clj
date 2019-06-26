@@ -1,4 +1,22 @@
-(ns codescene-ci-cd.utils)
+(ns codescene-ci-cd.utils
+  (:require [clojure.string :as string]))
+
+(def ^:private codescene-identifier "4744e426-5795-11e9-8647-d663bd873d93")
+(def ^:private identifier-comment (format "<!--%s-->" codescene-identifier))
+
+(defn with-codescene-identifier [markdown]
+  (string/join \newline [identifier-comment markdown]))
+
+(defn find-codescene-comment-ids [comments]
+  (->> comments
+       (filter #(string/includes? (:body %) codescene-identifier))
+       (map :id)))
+
+(defn url-for-comment [id comments]
+  (->> comments
+       (filter #(= (:id %) id))
+       (map :url)
+       first))
 
 (defn ex->str [e]
   (str e (or (ex-data e) "") (with-out-str (clojure.stacktrace/print-stack-trace e))))
@@ -27,7 +45,7 @@
    :codescene-user                       (getenv-str "CODESCENE_USER" "bot")
    :codescene-password                   (getenv-str "CODESCENE_PASSWORD" "secret")
    :codescene-repository                 repo
-   :codescene-coupling-threshold-percent (getenv-int "CODESCENE_CI_CD_COUPLING_THRESHOLD_PERCENT" 45)
+   :codescene-coupling-threshold-percent (getenv-int "CODESCENE_CI_CD_COUPLING_THRESHOLD_PERCENT" 80)
    :http-timeout                          (getenv-int "CODESCENE_CI_CD_HTTP_TIMEOUT" 30000)})
 
 (defn project-id [request]

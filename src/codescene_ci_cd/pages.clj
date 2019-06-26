@@ -9,7 +9,7 @@
 (defn- header [message error]
   [:div.col-lg-12
    [:div
-    [:h1 "CodeScene Enterprise JIRA Integration"]]
+    [:h1 "CodeScene Enterprise Ci/CD Integration"]]
    [:hr]
    (when message
      [:div.alert.alert-success message])

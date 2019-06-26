@@ -12,9 +12,9 @@
 (defn- comment-url [api-url owner repo comment-id]
   (format "%s/repos/%s/%s/issues/comments/%s" api-url owner repo comment-id))
 
-(defn get-pull-request-comments [api-url api-token owner repo pull-request-id timeout]
+(defn get-comments [comments-url api-token timeout]
   "Returns a map of id->comment"
-  (->> (:body (http/get (comments-url api-url owner repo pull-request-id)
+  (->> (:body (http/get comments-url
                     {:headers        (header-with-pat api-token)
                      :as             :json
                      :socket-timeout timeout
@@ -22,8 +22,13 @@
        (map (fn [x] [(:id x) (:body x)]))
        (into {})))
 
+(defn get-pull-request-comments [api-url api-token owner repo pull-request-id timeout]
+  "Returns a map of id->comment"
+  (let [comments-url (comments-url api-url owner repo pull-request-id)]
+    (get-comments comments-url api-token timeout)))
+
 (defn delete-comment [comment-url api-token timeout]
-  "Deletes a comment by id, returns true if succesful"
+  "Deletes a comment, returns true if succesful"
   (:body (http/delete comment-url
                       {:headers (header-with-pat api-token)
                        :as      :json

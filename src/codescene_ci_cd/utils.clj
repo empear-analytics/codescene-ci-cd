@@ -7,10 +7,16 @@
 (defn with-codescene-identifier [markdown]
   (string/join \newline [identifier-comment markdown]))
 
-(defn find-codescene-comment-ids [comments]
+(defn comments->codescene-comment-ids [comments]
   (->> comments
        (filter #(string/includes? (:body %) codescene-identifier))
        (map :id)))
+
+(defn ids-to-comments->codescene-comment-ids [ids-to-comments]
+  (->> ids-to-comments
+       (filter #(string/includes? (second %) codescene-identifier))
+       (into {})
+       (map first)))
 
 (defn url-for-comment [id comments]
   (->> comments

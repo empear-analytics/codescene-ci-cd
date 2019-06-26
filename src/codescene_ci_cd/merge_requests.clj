@@ -11,7 +11,7 @@
   (log/info "Create GitLab Note for merge request...")
   (let [{:keys [gitlab-api-url gitlab-api-token gitlab-project-id gitlab-merge-request-iid http-timeout]} options
         notes (gitlab/get-merge-request-notes gitlab-api-url gitlab-api-token gitlab-project-id gitlab-merge-request-iid http-timeout)
-        note-ids (utils/find-codescene-comment-ids notes)
+        note-ids (utils/ids-to-comments->codescene-comment-ids notes)
         markdown (results/as-markdown results options)]
     (doseq [note-id note-ids]
       (log/info (format "Remove old GitLab Note with id %d for merge request..." note-id))
@@ -23,7 +23,7 @@
   (log/info "Create GitHub Comment for pull request...")
   (let [{:keys [github-api-url github-api-token github-owner github-repo github-pull-request-id http-timeout]} options
         comments (github/get-pull-request-comments github-api-url github-api-token github-owner github-repo github-pull-request-id http-timeout)
-        comment-ids (utils/find-codescene-comment-ids comments)
+        comment-ids (utils/ids-to-comments->codescene-comment-ids comments)
         markdown (results/as-markdown results options)]
     (doseq [comment-id comment-ids]
       (log/info (format "Remove old GitHub Comment with id %d for merge request..." comment-id))
@@ -35,7 +35,7 @@
   (log/info "Create BitBucket Comment for pull request...")
   (let [{:keys [bitbucket-api-url bitbucket-user bitbucket-password bitbucket-repo bitbucket-pull-request-id http-timeout]} options
         comments (bitbucket/get-pull-request-comments bitbucket-api-url bitbucket-user bitbucket-password bitbucket-repo bitbucket-pull-request-id http-timeout)
-        comment-ids (utils/find-codescene-comment-ids comments)
+        comment-ids (utils/ids-to-comments->codescene-comment-ids comments)
         markdown (results/as-markdown results options)]
     (doseq [comment-id comment-ids]
       (log/info (format "Remove old Bitbucket Comment with id %d for merge request..." comment-id))

@@ -6,7 +6,8 @@
              [github-hook :as github-hook]
              [gitlab-hook :as gitlab-hook]
              [pages :as pages]
-             [bitbucket-hook :as bitbucket-hook]]
+             [bitbucket-hook :as bitbucket-hook]
+             [utils :as utils]]
             [ring.middleware
              [defaults :refer [api-defaults wrap-defaults]]
              [json :refer [wrap-json-response wrap-json-body]]
@@ -93,9 +94,7 @@
   ([options]
    (stop-server)
    (let [user-config (init)
-         port (or (some-> (System/getenv "PORT")
-                          Integer/parseInt)
-                  3005)]
+         port (utils/getenv-int "CODESCENE_CI_CD_PORT" 3005)]
 
      (log/infof "Starting server at port %d..." port)
      (let [jetty-server (run-jetty

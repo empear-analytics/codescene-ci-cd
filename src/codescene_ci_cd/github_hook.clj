@@ -32,7 +32,7 @@
 
 (defn- create-comment [comments-url api-token markdown timeout]
   (let [comments (github-api/get-comments comments-url api-token timeout)
-        comment-ids (utils/find-codescene-comment-ids comments)
+        comment-ids (utils/comments->codescene-comment-ids comments)
         text (utils/with-codescene-identifier markdown)]
     (doseq [comment-id comment-ids]
       (log/debugf "Remove old GitHub Comment with id %d..." comment-id)
@@ -56,7 +56,6 @@
           commits (github-api/get-commit-ids commits-url token timeout)
           results (delta-analysis/run-delta-analysis-on-commit-set config commits)
           markdown (results/as-markdown [results] config)]
-      (clojure.pprint/pprint results)
       (log/debugf "Decorate PR with comment using url %s" comments-url)
       (create-comment comments-url token markdown timeout)
       (log/infof "Done with PR"))))

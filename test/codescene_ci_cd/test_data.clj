@@ -32,15 +32,16 @@
    :result  {:risk          2,
              :description   "The change is low risk, and touches 1 files and modifies 0 lines of code. The risk is somewhat lower due to an experienced author.",
              :warnings      [],
+             :code-owners-for-quality-gates [],
              :quality-gates {:degrades-in-code-health false, :violates-goal false}},
    :title   "7d0c1c5b2a786b231538c79257499f0b5adfd8ac"})
 
 (def codescene-degrading-code-health-reply
   (-> codescene-reply
       (assoc-in [:result :quality-gates :degrades-in-code-health] true)
-      (assoc-in [:result :warnings] [{:category "Degrades In Code Health" :details "Blabla"}])))
+      (assoc-in [:result :warnings] [{:category "Degrades In Code Health" :details ["Blabla"]}])))
 
 (def codescene-failed-goal-reply
   (-> codescene-reply
       (assoc-in [:result :quality-gates :violates-goal] true)
-      (assoc-in [:result :warnings] [{:category "Violates Goal" :details "Blabla"}])))
+      (assoc-in [:result :warnings] [{:category "Violates Goal" :details ["Blabla"]}])))

@@ -42,7 +42,7 @@
   (let [{:keys [risk-threshold fail-on-failed-goal fail-on-declining-code-health]} options
         {:keys [protocol host port]} url-parts
         {:keys [title view result commits goal-has-failed code-health-declined hits-risk-threshold]} entry
-        {:keys [risk description warnings improvements]} result
+        {:keys [risk description code-owners-for-quality-gates warnings improvements]} result
         view-url (format "%s//%s:%d%s" protocol host port view)]
     (concat
       [(md-table-row ["" (bold "CodeScene Delta Analysis Results")])]
@@ -51,6 +51,8 @@
       (when (or fail-on-failed-goal fail-on-declining-code-health)
         [(md-table-row [(bold "Quality Gates") (if (or goal-has-failed code-health-declined) "Fail" "OK")])])
       [(md-table-row [(bold "Description") description])]
+      (when (seq code-owners-for-quality-gates)
+        [(md-table-row [(bold "Code Owners") (linebreak-between code-owners-for-quality-gates)])])
       (when (seq commits)
         [(md-table-row [(bold "Commits") (linebreak-between commits)])])
       (when (seq warnings)
@@ -63,7 +65,7 @@
   (let [{:keys [risk-threshold fail-on-failed-goal fail-on-declining-code-health]} options
         {:keys [protocol host port]} url-parts
         {:keys [title view result commits goal-has-failed code-health-declined hits-risk-threshold]} entry
-        {:keys [risk description warnings improvements]} result
+        {:keys [risk description code-owners-for-quality-gates warnings improvements]} result
         view-url (format "%s//%s:%d%s" protocol host port view)]
     (concat
 
@@ -74,6 +76,8 @@
       [(str \tab "Description:" \space description)]
       (when (seq commits)
         [(str \tab "Commits:" \space (comma-between commits))])
+      (when (seq code-owners-for-quality-gates)
+        [(str \tab "Code Owners:" \newline (newline-between (map #(str \tab \tab %) code-owners-for-quality-gates)))])
       (when (seq warnings)
         [(str \tab "Warnings:" \newline (newline-between (map warning->text warnings)))])
       (when (seq improvements)

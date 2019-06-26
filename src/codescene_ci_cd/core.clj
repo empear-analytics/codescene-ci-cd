@@ -5,8 +5,11 @@
             [codescene-ci-cd.delta-analysis :as delta-analysis]
             [codescene-ci-cd.results :as results]
             [codescene-ci-cd.merge-requests :as merge-requests]
+            [codescene-ci-cd.server :as server]
             [clojure.java.io :as io]
-            [clojure.data.json :as json])
+            [clojure.data.json :as json]
+            [taoensso.timbre :as log]
+            [codescene-ci-cd.utils :as utils])
   (:gen-class))
 
 (def ^:private cli-options
@@ -16,6 +19,8 @@
    ["-u" "--codescene-user USER" "CodeScene User"]
    ["-p" "--codescene-password PWD" "CodeScene Password"]
    ["-r" "--codescene-repository REPO" "CodeScene Repository"]
+   ;; Run as a service
+   [nil "--service" "Run as a Service" :default false]
    ;; Flags
    [nil "--analyze-individual-commits" "Individual Commits" :default false]
    [nil "--analyze-branch-diff" "By Branch" :default false]
@@ -68,13 +73,13 @@
   (str "The following validation errors occurred for your command:\n\n"
        (string/join \newline errors)))
 
-(defn- exit [ok? msg log-fn]
-  (log-fn msg)
+(defn- exit [ok? msg]
+  (log/info msg)
   (System/exit (if ok? 0 1)))
 
-(defn- exit-with-exception[ok? msg e log-fn]
-  (log-fn msg)
-  (log-fn (with-out-str (clojure.stacktrace/print-stack-trace e)))
+(defn- exit-with-exception[ok? msg e]
+  (log/info msg)
+  (log/info (with-out-str (clojure.stacktrace/print-stack-trace e)))
   (System/exit (if ok? 0 1)))
 
 (defn- validate-options [options]
@@ -124,6 +129,8 @@
       (:help options) {:exit-message (usage summary) :ok? true}
       ;; errors => exit with description of errors
       errors {:exit-message (error-msg errors)}
+      ;; run as a service
+      (:service options) (server/start-server {:join? true})
       :else (let [validation-errors (validate-options options)]
               (if (seq validation-errors)
                 ;; failed custom validation => exit with usage summary
@@ -131,46 +138,43 @@
                 ;; success => exit with options
                 {:options options})))))
 
-(defn run-analysis [options log-fn]
+(defn run-analysis [options]
   (let [{:keys [analyze-individual-commits analyze-branch-diff previous-commit base-revision]} options]
     (concat
       (when (and analyze-individual-commits (or (some? previous-commit) (some? base-revision)))
-        (delta-analysis/analyze-individual-commits-for options log-fn))
+        (delta-analysis/analyze-individual-commits-for options))
       (when (and analyze-branch-diff (some? base-revision))
-        (delta-analysis/analyze-work-on-branch-for options log-fn)))))
+        (delta-analysis/analyze-work-on-branch-for options)))))
 
-(defn log-result [options results log-fn]
-  (log-fn (results/as-text results options)))
+(defn log-result [options results]
+  (println (results/as-text results options)))
 
-(defn ex->str [e]
-  (str e (or (ex-data e) "") (with-out-str (clojure.stacktrace/print-stack-trace e))))
 
-(defn run-analysis-and-handle-result [options log-fn]
+(defn run-analysis-and-handle-result [options]
   (try
-    (let [results (run-analysis options log-fn)
+    (let [results (run-analysis options)
           success (not-any? :unstable results)]
       (when-let [result-path (:result-path options)]
         (with-open [wr (io/writer result-path)]
           (.write wr (json/write-str results))))
       (when (:create-gitlab-note options)
-        (merge-requests/create-gitlab-note options results log-fn))
+        (merge-requests/create-gitlab-note options results))
       (when (:create-github-comment options)
-        (merge-requests/create-github-comment options results log-fn))
+        (merge-requests/create-github-comment options results))
       (when (:create-bitbucket-comment options)
-        (merge-requests/create-bitbucket-comment options results log-fn))
+        (merge-requests/create-bitbucket-comment options results))
       (when (:log-result options)
-        (log-result options results log-fn))
+        (log-result options results))
       [success (if success "CodeScene delta analysis ok!" "CodeScene delta analysis detected problems!")])
     (catch Exception e
-      [(:pass-on-failed-analysis options) (str "CodeScene-CI/CD couldn't perform the delta analysis:" (ex->str e))])))
+      [(:pass-on-failed-analysis options) (str "CodeScene-CI/CD couldn't perform the delta analysis:" (utils/ex->str e))])))
 
 (defn -main [& args]
-  (let [{:keys [options exit-message ok?]} (parse-args args)
-        log-fn println]
+  (let [{:keys [options exit-message ok?]} (parse-args args)]
     (if exit-message
-      (exit ok? exit-message log-fn)
-      (let [[ok? exit-message] (run-analysis-and-handle-result options log-fn)]
-        (exit ok? exit-message log-fn)))))
+      (exit ok? exit-message)
+      (let [[ok? exit-message] (run-analysis-and-handle-result options)]
+        (exit ok? exit-message)))))
 
 (comment
   (def options {:analyze-individual-commits false,

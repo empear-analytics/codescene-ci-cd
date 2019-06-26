@@ -12,4 +12,4 @@ COPY codescene-ci-cd.sh .
 RUN chmod 755 codescene-ci-cd.sh
 
 ENTRYPOINT ["codescene-ci-cd.sh"]
-CMD ["--help"]
+CMD ["--service"]

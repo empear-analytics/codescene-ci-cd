@@ -12,52 +12,83 @@
 (defn- comment-url [api-url owner repo comment-id]
   (format "%s/repos/%s/%s/issues/comments/%s" api-url owner repo comment-id))
 
-(defn get-pull-request-comments [api-url api-token owner repo pull-request-id timeout]
-  "Returns a map of id->comment"
-  (->> (:body (http/get (comments-url api-url owner repo pull-request-id)
+(defn get-comments [comments-url api-token timeout]
+  "Returns a list of comments"
+  (-> (:body (http/get comments-url
                     {:headers        (header-with-pat api-token)
-                     :as             :json
+                     :accept         :json
                      :socket-timeout timeout
                      :conn-timeout   timeout}))
-       (map (fn [x] [(:id x) (:body x)]))
-       (into {})))
+      (clojure.data.json/read-str :key-fn keyword)))
+
+(defn get-commits [commits-url api-token timeout]
+  "Returns a list commits (maps)"
+  (-> (:body (http/get commits-url
+                        {:headers        (header-with-pat api-token)
+                         :accept         :json
+                         :socket-timeout timeout
+                         :conn-timeout   timeout}))
+      (clojure.data.json/read-str :key-fn keyword)))
+
+(defn get-commit-ids [commits-url api-token timeout]
+  "Returns a list of commit ids"
+  (->> (get-commits commits-url api-token timeout)
+      (map :sha)))
+
+(defn get-pull-request-comments [api-url api-token owner repo pull-request-id timeout]
+  "Returns a map of id->comment"
+  (let [comments-url (comments-url api-url owner repo pull-request-id)]
+    (->> (get-comments comments-url api-token timeout)
+         (map (fn [x] [(:id x) (:body x)]))
+         (into {}))))
+
+(defn delete-comment [comment-url api-token timeout]
+  "Deletes a comment, returns true if succesful"
+  (:body (http/delete comment-url
+                      {:headers        (header-with-pat api-token)
+                       :as             :json
+                       :socket-timeout timeout
+                       :conn-timeout   timeout}))
+  true)
 
 (defn delete-pull-request-comment [api-url api-token owner repo comment-id timeout]
   "Deletes a comment by id, returns true if succesful"
-  (:body (http/delete (comment-url api-url owner repo comment-id)
-                      {:headers (header-with-pat api-token)
-                       :as      :json
-                       :socket-timeout timeout
-                       :conn-timeout timeout}))
+  (let [comment-url (comment-url api-url owner repo comment-id)]
+    (delete-comment comment-url api-token timeout))
   true)
+
+(defn create-comment [comments-url api-token text timeout]
+  "Creates comment and returns the comment id"
+  (->> (:body (http/post comments-url
+                         {:headers        (header-with-pat api-token)
+                          :body           (clojure.data.json/write-str {:body text})
+                          :as             :json
+                          :socket-timeout timeout
+                          :conn-timeout   timeout}))
+       :id))
 
 (defn create-pull-request-comment [api-url api-token owner repo pull-request-id text timeout]
   "Creates comment and returns the comment id"
-  (->> (:body (http/post (comments-url api-url owner repo pull-request-id)
-                     {:headers        (header-with-pat api-token)
-                      :body           (clojure.data.json/write-str {:body text})
-                      :as             :json
-                      :socket-timeout timeout
-                      :conn-timeout   timeout}))
-       :id))
+  (let [comments-url (comments-url api-url owner repo pull-request-id)]
+    (create-comment comments-url api-token text timeout)))
 
 (defn get-pull-request-comment [api-url api-token owner repo comment-id timeout]
   "Gets a comment text by id"
   (->> (:body (http/get (comment-url api-url owner repo comment-id)
-                    {:headers        (header-with-pat api-token)
-                     :as             :json
-                     :socket-timeout timeout
-                     :conn-timeout   timeout}))
+                        {:headers        (header-with-pat api-token)
+                         :as             :json
+                         :socket-timeout timeout
+                         :conn-timeout   timeout}))
        :body))
 
 (defn update-pull-request-comment [api-url api-token owner repo comment-id text timeout]
   "Updates a comment text by id, returns true if succesful"
   (:body (http/patch (comment-url api-url owner repo comment-id)
-                    {:headers      (header-with-pat api-token)
-                     :body (json/write-str {:body text})
-                     :as           :json
-                     :socket-timeout timeout
-                     :conn-timeout timeout}))
+                     {:headers        (header-with-pat api-token)
+                      :body           (json/write-str {:body text})
+                      :as             :json
+                      :socket-timeout timeout
+                      :conn-timeout   timeout}))
   true)
 
 (comment
@@ -65,7 +96,7 @@
   (def api-token "")
   (def owner "knorrest")
   (def repo "analysis-target")
-  (get-pull-request-comments api-url api-token owner repo 1 3000)
+  (get-pull-request-comments api-url api-token owner repo 4 3000)
   (get-pull-request-comment api-url api-token owner repo 488999956 3000)
   (delete-pull-request-comment api-url api-token owner repo 488678846 3000)
   (create-pull-request-comment api-url api-token owner repo 1 "HoHo" 3000)

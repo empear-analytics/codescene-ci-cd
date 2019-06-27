@@ -19,6 +19,11 @@ The codescene-ci-cd application is runnable from build scripts in a CI-CD system
 
 ![Component Diagram](analysis-results.png)
 
+It is also possible to run codescene-ci-cd as a service that can respond to webhooks directly from the repo provider:
+
+
+![Component Diagram](component-diagram-service.png)
+
 ## Capabilities
 
 This application lets you use CodeScene’s Delta Analysis to:
@@ -27,6 +32,8 @@ This application lets you use CodeScene’s Delta Analysis to:
 * Specify quality gates that trigger in case the Code Health of a hotspot declines.
 
 ## Usage
+
+### Run in CI/CD pipeline
 
 The application can be run on its own in a repo folder with:
 
@@ -86,7 +93,7 @@ The `result-path` saves the analysis results as a json file.
 
 The `http-timeout` options specifies the timeout in milliseconds for all http requests. In some situations it may benecessary to specify a value greater than the default 10,000 ms.
 
-### Configure GitLab for CodeScene Delta Analysis
+#### Configure GitLab for CodeScene Delta Analysis
 
 To enable the CodeScene integration in a GitLab build pipeline, jobs running _codescene-ci-cd_ are added to the projects _.gitlab-ci.yml_ file similar to the example provided  [here](templates/gitlab/.gitlab-ci.yml).
 
@@ -131,7 +138,7 @@ To sum this up, the steps to follow for GitLab integration are:
 1. Add the `CODESCENE-*` variables specified in the table above as [custom variables](https://docs.gitlab.com/ee/ci/variables/#creating-a-custom-environment-variable)  through the GitLab UI.
 1. Add delta analysis job(s) to _.gitlab-ci.yml_, preferrably using a template.
 
-### Configure Circle CI/GitHub for CodeScene Delta Analysis
+#### Configure Circle CI/GitHub for CodeScene Delta Analysis
 
 To enable the CodeScene integration in a Circle CI build workflow, jobs running _codescene-ci-cd_ are added to the projects _.circleci/config.yml_ file similar to the example provided  [here](templates/circleci/config.yml).
 
@@ -159,6 +166,39 @@ The steps to follow for Circle CI/GitHub integration are:
 1. Add delta analysis job(s) to _config.yml_.
 
 Note that to DRY up the _config.yml_ the codescene-jobs one could optionally create a Circle CI [ORB](https://circleci.com/docs/2.0/creating-orbs/) containing the delta analysis jobs.
+
+### Run as a service responding on webhooks
+
+To start _codescene-ci-cd_ as a service, run it without any arguments. Configuration is done by setting some environment variables:
+
+| Variable | Description |
+| ------------- |-------------|
+| CODESCENE_URL | The URL to the CodeScene instance used for delta analysis. |
+| CODESCENE_USER | A bot user created in codesene for accessing the API. |
+| CODESCENE_PASSWORD | The password for the bot user. |
+| CODESCENE_CI_CD_GITHUB_SECRET | The secret set on the webhook in GitHub. |
+| CODESCENE_CI_CD_GITHUB_TOKEN | A personal access token created in GitHub with permission to access and attach comments to commits and pull requests. |
+| CODESCENE_CI_CD_PORT | The port were the service is available. (default is 3005) |
+
+Webhooks endpoints are provided on the following URL:s
+
+| Repo service | Webhook Endpoint URL |
+| ------------- |-------------|
+| GitHub | [ServiceURL]/webhooks/github |
+| GitLab | Not available yet. |
+| BitBucket | Not available yet. |
+
+#### Configure GitHub for CodeScene Delta Analysis
+The steps to follow to configure GitHub using webhooks for triggering delta analysis are:
+
+1. Create a CodeScene bot user in the CodeScene UI. Use the values specified for `CODESCENE_USER` and `CODESCENE_PASSWORD`
+1. Create a [Personal Access Token](https://help.github.com/en/articles/creating-a-personal-access-token-for-the-command-line) in GitHub that can be used for accessing the API, preferrably as a dedicated CodeScene user. (That user will be visible as the comment author.) Use that value for `CODESCENE_CI_CD_GITHUB_TOKEN`.
+1. Create a [webhook](https://developer.github.com/webhooks) on the repository you want to trigger an analysis for.
+1. Copy the secret from the webhook and use as the value for `CODESCENE_CI_CD_GITHUB_SECRET`. 
+1. Set the Payload URL for the webhook to `[ServiceURL]/webhooks/github?project_id=[ProjectNbr]`. Retrieve the project number from the delta analysis URL from the CodeScene UI.
+1. Select Push and Pull Request events to trigger the webhook.
+1. Set the `CODESCENE_URL` and start the _codescene-ci-cd_ service.
+
 
 ## Manual build
 

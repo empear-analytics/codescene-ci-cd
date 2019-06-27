@@ -4,7 +4,11 @@ services:
     build: . 
     ports:
       - "3005:3005"
+    # Transfer environment variables from host to container
+    # Set them on the host or use a .env file for specifying them
     environment:
+      - CODESCENE_URL=${CODESCENE_URL}
+      - CODESCENE_USER=${CODESCENE_USER}
+        - CODESCENE_PASSWORD=${CODESCENE_PASSWORD}
       - CODESCENE_CI_CD_GITHUB_SECRET=${CODESCENE_CI_CD_GITHUB_SECRET}
       - CODESCENE_CI_CD_GITHUB_TOKEN=${CODESCENE_CI_CD_GITHUB_TOKEN}
-      - CODESCENE_URL=${CODESCENE_URL}

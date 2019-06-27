@@ -125,12 +125,12 @@
   [args]
   (let [{:keys [options arguments errors summary]} (cli/parse-opts args cli-options)]
     (cond
+      ;; run as a service
+      (not (seq args)) (server/start-server {:join? true})
       ;; help => exit OK with usage summary
       (:help options) {:exit-message (usage summary) :ok? true}
       ;; errors => exit with description of errors
       errors {:exit-message (error-msg errors)}
-      ;; run as a service
-      (:service options) (server/start-server {:join? true})
       :else (let [validation-errors (validate-options options)]
               (if (seq validation-errors)
                 ;; failed custom validation => exit with usage summary

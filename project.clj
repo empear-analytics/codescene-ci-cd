@@ -13,6 +13,9 @@
                  [clj-http "3.10.0"]
                  [hiccup "1.0.5"]
                  [com.taoensso/timbre "4.10.0"]
+                 ;; use latest tools.reader to fix issues with timbre using an old version
+                 ;; see https://github.com/ptaoussanis/timbre/issues/263
+                 [org.clojure/tools.reader "1.3.2"]
                  [cheshire "5.8.1"]]
   :main ^:skip-aot codescene-ci-cd.core
   :uberjar-name "codescene-ci-cd.standalone.jar"

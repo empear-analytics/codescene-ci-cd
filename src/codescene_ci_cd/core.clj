@@ -196,4 +196,8 @@
                 :codescene-user "bot",
                 :fail-on-failed-goal true,
                 :fail-on-high-risk true})
-  (def results (binding [clojure.java.shell/*sh-dir* d] (run-analysis-and-handle-result options println))))
+  (def results (clojure.java.shell/with-sh-dir ,,,
+                 (run-analysis-and-handle-result options)))
+
+  ;; end
+  )

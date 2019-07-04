@@ -14,21 +14,19 @@
 
 (defn get-comments [comments-url api-token timeout]
   "Returns a list of comments"
-  (-> (:body (http/get comments-url
-                    {:headers        (header-with-pat api-token)
-                     :accept         :json
-                     :socket-timeout timeout
-                     :conn-timeout   timeout}))
-      (clojure.data.json/read-str :key-fn keyword)))
+  (:body (http/get comments-url
+                   {:headers        (header-with-pat api-token)
+                    :as             :json-strict
+                    :socket-timeout timeout
+                    :conn-timeout   timeout})))
 
 (defn get-commits [commits-url api-token timeout]
   "Returns a list commits (maps)"
-  (-> (:body (http/get commits-url
-                        {:headers        (header-with-pat api-token)
-                         :accept         :json
-                         :socket-timeout timeout
-                         :conn-timeout   timeout}))
-      (clojure.data.json/read-str :key-fn keyword)))
+  (:body (http/get commits-url
+                   {:headers        (header-with-pat api-token)
+                    :as             :json-strict
+                    :socket-timeout timeout
+                    :conn-timeout   timeout})))
 
 (defn get-commit-ids [commits-url api-token timeout]
   "Returns a list of commit ids"
@@ -46,7 +44,7 @@
   "Deletes a comment, returns true if succesful"
   (:body (http/delete comment-url
                       {:headers        (header-with-pat api-token)
-                       :as             :json
+                       :as             :json-strict
                        :socket-timeout timeout
                        :conn-timeout   timeout}))
   true)
@@ -62,7 +60,7 @@
   (->> (:body (http/post comments-url
                          {:headers        (header-with-pat api-token)
                           :body           (clojure.data.json/write-str {:body text})
-                          :as             :json
+                          :as             :json-strict
                           :socket-timeout timeout
                           :conn-timeout   timeout}))
        :id))
@@ -76,7 +74,7 @@
   "Gets a comment text by id"
   (->> (:body (http/get (comment-url api-url owner repo comment-id)
                         {:headers        (header-with-pat api-token)
-                         :as             :json
+                         :as             :json-strict
                          :socket-timeout timeout
                          :conn-timeout   timeout}))
        :body))
@@ -86,7 +84,7 @@
   (:body (http/patch (comment-url api-url owner repo comment-id)
                      {:headers        (header-with-pat api-token)
                       :body           (json/write-str {:body text})
-                      :as             :json
+                      :as             :json-strict
                       :socket-timeout timeout
                       :conn-timeout   timeout}))
   true)

@@ -15,7 +15,7 @@
   "Returns a map of id->comment"
   (->> (:body (http/get comments-url
                         {:basic-auth     [user password]
-                         :as             :json
+                         :as             :json-strict
                          :socket-timeout timeout
                          :conn-timeout   timeout}))
        :values
@@ -31,7 +31,7 @@
   "Deletes a comment, returns true if succesful"
   (http/delete comment-url
                {:basic-auth     [user password]
-                :as             :json
+                :as             :json-strict
                 :socket-timeout timeout
                 :conn-timeout   timeout})
   true)
@@ -49,7 +49,7 @@
                           ;;:body           (format "{\"content\": {\"raw\": \"%s\"}}" text)
                           :body           (clojure.data.json/write-str {:content {:raw text}})
                           :content-type :json
-                          :as             :json
+                          :as             :json-strict
                           :socket-timeout timeout
                           :conn-timeout   timeout}))
        :id))

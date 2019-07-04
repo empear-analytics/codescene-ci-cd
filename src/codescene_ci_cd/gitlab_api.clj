@@ -21,7 +21,7 @@
   "Returns a map of id->comment"
   (->> (:body (http/get notes-url
                         {:headers        (header-with-pat api-token)
-                         :as             :json
+                         :as             :json-strict
                          :socket-timeout timeout
                          :conn-timeout   timeout}))
        (map (fn [x] [(:id x) (:body x)]))
@@ -36,7 +36,7 @@
   "Gets a comment text by id"
   (->> (:body (http/get (note-url api-url project-id merge-request-iid note-id)
                     {:headers        (header-with-pat api-token)
-                     :as             :json
+                     :as             :json-strict
                      :socket-timeout timeout
                      :conn-timeout   timeout}))
        :body))
@@ -45,7 +45,7 @@
   "Deletes a comment, returns true if succesful"
   (:body (http/delete note-url
                       {:headers (header-with-pat api-token)
-                       :as      :json
+                       :as      :json-strict
                        :socket-timeout timeout
                        :conn-timeout timeout}))
   true)
@@ -61,7 +61,7 @@
   (->> (:body (http/post notes-url
                          {:headers        (header-with-pat api-token)
                           :query-params   {:body text}
-                          :as             :json
+                          :as             :json-strict
                           :socket-timeout timeout
                           :conn-timeout   timeout}))
        :id))
@@ -73,7 +73,7 @@
 
 (defn create-commit-note [api-url api-token project-id commit-sha text timeout]
   "Creates comment and returns the comment id"
-  (let [commit-notes-url (commit-notes-url api-url project-id commit-sha)]
+  (let [notes-url (commit-notes-url api-url project-id commit-sha)]
     (create-note notes-url api-token text timeout)))
 
 (defn update-merge-request-note [api-url api-token project-id merge-request-iid note-id text timeout]
@@ -81,7 +81,7 @@
   (:body (http/put (note-url api-url project-id merge-request-iid note-id)
                    {:headers      (header-with-pat api-token)
                     :query-params {:body text}
-                    :as           :json
+                    :as           :json-strict
                     :socket-timeout timeout
                     :conn-timeout timeout}))
   true)
@@ -89,10 +89,10 @@
 
 (comment
   (def api-url "https://gitlab.com/api/v4")
-  (def api-token "qQ7GM2tp397Qx4Sid-yz")
+  (def api-token "9ms24FRz57euN2bx-LG3")
   (def project-id 12148632)
   (get-merge-request-notes api-url api-token project-id 1 3000)
   (create-merge-request-note api-url api-token project-id 1 "Bla bla bla" 3000)
-  (update-merge-request-note api-url api-token project-id 1 166512857 "Bla bla blo" 3000)
+  (update-merge-request-note api-url api-token project-id 1 188318646 "Bla bla blo" 3000)
   (get-merge-request-note api-url api-token project-id 1 166512857 3000)
-  (delete-merge-request-note api-url api-token project-id 1 166512857 3000))
+  (delete-merge-request-note api-url api-token project-id 1 188318646 3000))

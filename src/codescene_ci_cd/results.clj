@@ -93,3 +93,31 @@
   (let [{:keys [delta-analysis-url]} options
         url-parts (url-parts delta-analysis-url)]
     (newline-between (mapcat #(entry->text % options url-parts) entries))))
+
+
+(comment
+  (def options
+    {:delta-analysis-url "http://localhost:3003/delta-analysis/projects/8"
+     :risk-threshold 7
+     :fail-on-failed-goal true
+     :fail-on-declining-code-health true})
+  (def entry
+    {:version              "2",
+     :url                  "/projects/2/delta-analysis/b428cd6e3623e6050c3aa346d1b7462178a277ac"
+     :view                 "/2/delta-analysis/view/b428cd6e3623e6050c3aa346d1b7462178a277ac"
+     :result               {:risk                          7,
+                            :description                   "The change is high risk as it is more diffused (2 files modifified, 615 lines added, 2 lines deleted) than your normal change sets. The risk is lower since it's a very experienced author with many contributions"
+                            :warnings                      [{:category "DEGRADES IN CODE HEALTH"
+                                                             :details ["exmple.py degrades from a Code Health of 10 -> 6.1"]}
+                                                            {:category "VIOLATES GOALS"
+                                                             :details ["Hotspot marked \"supervise\", supervised.py, degrades from a CodeHealth of 10.0 -> 9.6"]}]
+                            :code-owners-for-quality-gates [],
+                            :quality-gates                 {:degrades-in-code-health false
+                                                            :violates-goal false}}
+     :title                "Not used"
+     :commits              ["7d0c1c5b2a786b231538c79257499f0b5adfd8ac"]
+     :goal-has-failed      true
+     :code-health-declined true
+     :hits-risk-threshold  true})
+  (println (as-text [entry] options))
+  (println (as-markdown [entry] options)))

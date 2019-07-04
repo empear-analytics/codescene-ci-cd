@@ -124,10 +124,10 @@ In these examples, the `CI_*` variables are all built-in variables in GitLab. Th
 | CODESCENE_DELTA_ANALYSIS_URL | The full URL to the CodeScene Delta Analysis REST API. Retrievable from the CodeScene GUI. |
 | CODESCENE_USER | A bot user created in codesene for accessing the API. |
 | CODESCENE_PASSWORD | The password for the bot user. |
-| CODESCENE_RISK_THRESHOLD | The risk threshold to use if _fail-on-high-risk_ is specified. |
-| CODESCENE_COUPLING_THRESHOLD_PERCENT | The coupling threshold used in the delta analysis. |
-| CODESCENE_TIMEOUT | The timeout in ms for all http calls in _codescene-ci-cd_ |
 | CODESCENE_GITLAB_API_TOKEN | A personal access token created in GitLab. |
+| CODESCENE_RISK_THRESHOLD | The risk threshold to use if _fail-on-high-risk_ is specified. (Optional) |
+| CODESCENE_COUPLING_THRESHOLD_PERCENT | The coupling threshold used in the delta analysis. (Optional) |
+| CODESCENE_TIMEOUT | The timeout in ms for all http calls in _codescene-ci-cd_. (Optional) |
 
 
 
@@ -144,7 +144,7 @@ To enable the CodeScene integration in a Circle CI build workflow, jobs running 
 
 The `codescene-ci-cd` job runs differently depending on whether it is a merge request build or not. For merge requests, it runs analysis on an entire branch and submits the results as a merge request comment. For regular commits, the individual commit is analysed
 
-In these examples, the `CIRCLE_*` variables are built-in variables in Circle CI. The `CODESCENE-*` variables are delta analysis specific variables that should be configured in the Circle CI UI. In the examples a codescene-ci-cd [context](https://circleci.com/docs/2.0/contexts) is used for sharing these variables across projects.
+In these examples, the `CIRCLE_*` variables are built-in variables in Circle CI. The `CODESCENE-*` variables are delta analysis specific variables that should be configured in the Circle CI UI. In the examples a Circle CI [context](https://circleci.com/docs/2.0/contexts) is used for sharing these variables across projects.
 
 | Variable | Description |
 | ------------- |-------------|

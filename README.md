@@ -184,9 +184,9 @@ Webhooks endpoints are provided on the following URL:s
 
 | Repo service | Webhook Endpoint URL |
 | ------------- |-------------|
-| GitHub | [ServiceURL]/webhooks/github |
-| GitLab | Not available yet. |
-| BitBucket | Not available yet. |
+| GitHub | [ServiceURL]/hooks/github |
+| GitLab | [ServiceURL]/hooks/gitlab |
+| BitBucket | [ServiceURL]/hooks/bitbucket |
 
 #### Configure GitHub for CodeScene Delta Analysis
 The steps to follow to configure GitHub using webhooks for triggering delta analysis are:
@@ -195,7 +195,7 @@ The steps to follow to configure GitHub using webhooks for triggering delta anal
 1. Create a [Personal Access Token](https://help.github.com/en/articles/creating-a-personal-access-token-for-the-command-line) in GitHub that can be used for accessing the API, preferrably as a dedicated CodeScene user. (That user will be visible as the comment author.) Use that value for `CODESCENE_CI_CD_GITHUB_TOKEN`.
 1. Create a [webhook](https://developer.github.com/webhooks) on the repository you want to trigger an analysis for.
 1. Copy the secret from the webhook and use as the value for `CODESCENE_CI_CD_GITHUB_SECRET`. 
-1. Set the Payload URL for the webhook to `[ServiceURL]/webhooks/github?project_id=[ProjectNbr]`. Retrieve the project number from the delta analysis URL from the CodeScene UI.
+1. Set the Payload URL for the webhook to `[ServiceURL]/hooks/github?project_id=[ProjectNbr]`. Retrieve the project number from the delta analysis URL from the CodeScene UI.
 1. Select Push and Pull Request events to trigger the webhook.
 1. Set the `CODESCENE_URL` and start the _codescene-ci-cd_ service.
 

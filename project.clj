@@ -16,7 +16,11 @@
                  ;; use latest tools.reader to fix issues with timbre using an old version
                  ;; see https://github.com/ptaoussanis/timbre/issues/263
                  [org.clojure/tools.reader "1.3.2"]
-                 [cheshire "5.8.1"]]
+                 [cheshire "5.8.1"]
+                 ;; explicit dependency on jaxb-api for java 9+ compatibility
+                 ;; see https://stackoverflow.com/questions/43574426/how-to-resolve-java-lang-noclassdeffounderror-javax-xml-bind-jaxbexception-in-j
+                 [javax.xml.bind/jaxb-api "2.3.0"]
+                 ]
   :main ^:skip-aot codescene-ci-cd.core
   :uberjar-name "codescene-ci-cd.standalone.jar"
   :profiles {:uberjar {:aot :all}})

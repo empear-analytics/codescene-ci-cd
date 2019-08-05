@@ -20,6 +20,9 @@
                  ;; explicit dependency on jaxb-api for java 9+ compatibility
                  ;; see https://stackoverflow.com/questions/43574426/how-to-resolve-java-lang-noclassdeffounderror-javax-xml-bind-jaxbexception-in-j
                  [javax.xml.bind/jaxb-api "2.3.0"]
+                 ;; try to fix Unexpected error (NoClassDefFoundError) macroexpanding GET at (src/codescene_ci_cd/server.clj:26:5).
+                 ;;   instaparse/core/Parser$reify__17365
+                 [instaparse "1.4.10"]
                  ]
   :main ^:skip-aot codescene-ci-cd.core
   :uberjar-name "codescene-ci-cd.standalone.jar"

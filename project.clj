@@ -10,7 +10,7 @@
                  [ring/ring-jetty-adapter "1.7.1"]
                  [ring/ring-json "0.4.0"]
                  [ring/ring-codec "1.1.2"]
-                 [clj-http "3.10.0"]
+                 [clj-http "3.9.0"]
                  [hiccup "1.0.5"]
                  [com.taoensso/timbre "4.10.0"]
                  ;; use latest tools.reader to fix issues with timbre using an old version

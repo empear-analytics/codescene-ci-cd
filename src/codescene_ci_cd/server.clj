@@ -52,21 +52,37 @@
       (handler (assoc request :body (io/input-stream (.getBytes body))
                               :body-as-string body)))))
 
+(defn- internal-error
+  [exception]
+  {:body (.getMessage exception)
+   :headers {"Content-Type" "text/plain"}
+   :status 500})
+
+(defn wrap-internal-exceptions [handler]
+  (fn [request]
+   (try
+     (handler request)
+     (catch Exception e
+       (log/error e "Internal error.")
+       (internal-error e)))))
+
 (defn init-app [config]
   (alter-var-root
-    #'app
-    (constantly
-      (-> config
+   #'app
+   (constantly
+    (-> config
           ;config/validate
-          app-routes
+        app-routes
           ;wrap-base-url
           ;(wrap-resource "public")
           ;(auth/wrap-auth config)
-          (wrap-params)
-          (wrap-json-response)
-          (wrap-json-body {:keywords? true})
-          (wrap-defaults api-defaults)
-          (wrap-body-as-string)))))
+
+        wrap-json-response
+        (wrap-json-body {:keywords? true})
+        wrap-params
+        (wrap-defaults api-defaults)
+        wrap-body-as-string
+        wrap-internal-exceptions))))
 
 (defn- load-config []
   (comment (let [config (config/read-config)]

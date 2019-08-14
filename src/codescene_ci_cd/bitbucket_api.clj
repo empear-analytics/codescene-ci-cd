@@ -1,6 +1,7 @@
 (ns codescene-ci-cd.bitbucket-api
   "Wraps the bitbucket http API"
-  (:require [clj-http.client :as http]))
+  (:require [clj-http.client :as http]
+            [clojure.data.json :as json]))
 
 (defn- header-with-pat [api-token]
   {"Authorization" (format "Bearer %s" api-token)})
@@ -47,7 +48,7 @@
   (->> (:body (http/post comments-url
                          {:basic-auth     [user password]
                           ;;:body           (format "{\"content\": {\"raw\": \"%s\"}}" text)
-                          :body           (clojure.data.json/write-str {:content {:raw text}})
+                          :body           (json/write-str {:content {:raw text}})
                           :content-type :json
                           :as             :json-strict
                           :socket-timeout timeout

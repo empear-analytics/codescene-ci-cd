@@ -1,7 +1,6 @@
 (ns codescene-ci-cd.github-validation
   (:require
-    [taoensso.timbre :as log]
-    [clojure.java.io :as io])
+    [taoensso.timbre :as log])
   (:import org.apache.commons.codec.binary.Hex
            javax.crypto.Mac;
            javax.crypto.spec.SecretKeySpec

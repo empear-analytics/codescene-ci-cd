@@ -148,7 +148,7 @@ In these examples, the `CIRCLE_*` variables are built-in variables in Circle CI.
 
 | Variable | Description |
 | ------------- |-------------|
-| CODESCENE_DELTA_ANALYSIS_URL | The full URL to the CodeScene Delta Analysis REST API. Retrievable from the CodeScene GUI. |
+| CODESCENE_DELTA_ANALYSIS_URL | The full URL to the [CodeScene Delta Analysis REST API](https://docs.enterprise.codescene.io/versions/3.2.3/guides/delta/automated-delta-analyses.html#the-rest-api-for-delta-analyses). Retrievable from the CodeScene GUI. |
 | CODESCENE_USER | A bot user created in codesene for accessing the API. |
 | CODESCENE_PASSWORD | The password for the bot user. |
 | CODESCENE_RISK_THRESHOLD | The risk threshold to use if _fail-on-high-risk_ is specified. |

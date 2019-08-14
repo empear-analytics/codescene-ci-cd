@@ -8,8 +8,7 @@
             [codescene-ci-cd.results :as results]
             [codescene-ci-cd.utils :as utils]
             [codescene-ci-cd.github-api :as github-api]
-            [clojure.string :as string]
-            [clojure.core.async :refer [go]]))
+            [clojure.string :as string]))
 
 (defn- secret []
   (utils/getenv-str "CODESCENE_CI_CD_GITHUB_SECRET" "<not-set>"))
@@ -49,7 +48,7 @@
         target-branch (get-in body [:pull_request :base :ref])
         comments-url (get-in body [:pull_request :comments_url])
         commits-url (get-in body [:pull_request :commits_url])]
-    (log/infof "Handle PR %d from branch %s to branch %s in %s with project id %s" pr-number source-branch target-branch repo project-id)
+    (log/infof "Handle PR %s from branch %s to branch %s in %s with project id %s" pr-number source-branch target-branch repo project-id)
     (let [config (utils/delta-analysis-config project-id repo)
           token (api-token)
           timeout (:http-timeout config)
@@ -63,6 +62,7 @@
 (defn on-pull-request [request]
   (let [{:keys [body]} request
         action (get-in body [:action])]
+    (log/info "Handle GitHub PR action: " action)
     (if (handled-pull-request-actions action)
       (handle-pull-request request))))
 
@@ -90,16 +90,20 @@
 (defn on-unhandled [event]
   (log/infof "Event %s is unhandled" event))
 
+(defn- run-analysis [request]
+  (try
+    (let [event (get-in request [:headers "x-github-event"])]
+      (log/info "Handling event: " event)
+      (case event
+        "pull_request" (on-pull-request request)
+        "push" (on-push request)
+        (on-unhandled event)))
+    (catch Exception e
+      (log/error "CodeScene CI/CD failed to do delta analysis:" (utils/ex->str e)))))
+
 (defn- run-analysis-async [request]
-  (go
-    (try
-      (let [event (get-in request [:headers "x-github-event"])]
-        (case event
-          "pull_request" (on-pull-request request)
-          "push" (on-push request)
-          (on-unhandled event)))
-      (catch Exception e
-        (log/error "CodeScene CI/CD failed to do delta analysis:" (utils/ex->str e))))))
+  (future
+    (run-analysis request)))
 
 (defn on-hook [request]
   (let [body-as-string (:body-as-string request)

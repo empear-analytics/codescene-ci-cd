@@ -125,10 +125,12 @@
   [args]
   (let [{:keys [options arguments errors summary]} (cli/parse-opts args cli-options)]
     (cond
-      ;; run as a service
-      (not (seq args)) (server/start-server {:join? true})
+      ;; run as a long-running service
+      (not (seq args)) {:service? true}
+      
       ;; help => exit OK with usage summary
       (:help options) {:exit-message (usage summary) :ok? true}
+
       ;; errors => exit with description of errors
       errors {:exit-message (error-msg errors)}
       :else (let [validation-errors (validate-options options)]
@@ -170,9 +172,15 @@
       [(:pass-on-failed-analysis options) (str "CodeScene-CI/CD couldn't perform the delta analysis:" (utils/ex->str e))])))
 
 (defn -main [& args]
-  (let [{:keys [options exit-message ok?]} (parse-args args)]
-    (if exit-message
+  (let [{:keys [options exit-message ok? service?]} (parse-args args)]
+    (cond
+      service?
+      (server/start-server {:join? true})
+
+      exit-message
       (exit ok? exit-message)
+
+      :else
       (let [[ok? exit-message] (run-analysis-and-handle-result options)]
         (exit ok? exit-message)))))
 
@@ -196,4 +204,9 @@
                 :codescene-user "bot",
                 :fail-on-failed-goal true,
                 :fail-on-high-risk true})
-  (def results (binding [clojure.java.shell/*sh-dir* d] (run-analysis-and-handle-result options println))))
+  (def results (clojure.java.shell/with-sh-dir ,,,
+                 (run-analysis-and-handle-result options)))
+
+  ;; end
+  )
+

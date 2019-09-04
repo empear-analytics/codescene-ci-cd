@@ -80,3 +80,69 @@
       --gitlab-merge-request-iid $CI_MERGE_REQUEST_IID \
       --http-timeout ${CODESCENE_TIMEOUT-30000} \
       --log-result
+
+.template-codescene-ci-cd:
+  image:
+    name: empear/codescene-ci-cd:1.1.2
+    entrypoint: [""]
+  variables:
+    GIT_DEPTH: ""
+  script: |
+    export PREVIOUS_COMMIT=$(git rev-parse HEAD^)
+    if [[ -z "$CODESCENE_DELTA_ANALYSIS_URL" ]] ; then
+      echo "No value specified for CODESCENE_DELTA_ANALYSIS_URL!"
+      exit 1
+    fi
+    if [[ -z "$CODESCENE_USER" ]] ; then
+      echo "No value specified for CODESCENE_USER!"
+      exit 1
+    fi
+    if [[ -z "$CODESCENE_PASSWORD" ]] ; then
+      echo "No value specified for CODESCENE_PASSWORD!"
+      exit 1
+    fi
+    if [[ -z "$CODESCENE_GITLAB_API_TOKEN" ]] ; then
+      echo "No value specified for CODESCENE_GITLAB_API_TOKEN!"
+      exit 1
+    fi
+
+    if [[ -z ${CI_MERGE_REQUEST_IID} ]] ; then
+      echo "Run delta analysis on commits from ${CI_COMMIT_SHA} to $PREVIOUS_COMMIT!"
+
+      codescene-ci-cd.sh \
+        --codescene-delta-analysis-url $CODESCENE_DELTA_ANALYSIS_URL \
+        --codescene-user $CODESCENE_USER \
+        --codescene-password $CODESCENE_PASSWORD \
+        --codescene-repository $CI_PROJECT_NAME \
+        --fail-on-failed-goal \
+        --fail-on-declining-code-health \
+        --analyze-individual-commits \
+        --risk-threshold ${CODESCENE_RISK_THRESHOLD-7} \
+        --coupling-threshold-percent ${CODESCENE_COUPLING_THRESHOLD_PERCENT-80} \
+        --current-commit $CI_COMMIT_SHA \
+        --previous-commit $PREVIOUS_COMMIT \
+        --http-timeout ${CODESCENE_TIMEOUT-30000} \
+        --log-result;
+    else
+      echo "Run delta analysis on merge request ${CI_MERGE_REQUEST_IID} to $CI_MERGE_REQUEST_TARGET_BRANCH_NAME!"
+
+      codescene-ci-cd.sh \
+        --codescene-delta-analysis-url $CODESCENE_DELTA_ANALYSIS_URL \
+        --codescene-user $CODESCENE_USER \
+        --codescene-password $CODESCENE_PASSWORD \
+        --codescene-repository $CI_PROJECT_NAME \
+        --fail-on-failed-goal \
+        --fail-on-declining-code-health \
+        --analyze-branch-diff \
+        --risk-threshold ${CODESCENE_RISK_THRESHOLD-7} \
+        --coupling-threshold-percent ${CODESCENE_COUPLING_THRESHOLD_PERCENT-80} \
+        --create-gitlab-note \
+        --current-commit $CI_COMMIT_SHA \
+        --base-revision origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME \
+        --gitlab-api-url $CI_API_V4_URL \
+        --gitlab-api-token $CODESCENE_GITLAB_API_TOKEN \
+        --gitlab-project-id $CI_MERGE_REQUEST_PROJECT_ID \
+        --gitlab-merge-request-iid $CI_MERGE_REQUEST_IID \
+        --http-timeout ${CODESCENE_TIMEOUT-30000} \
+        --log-result;
+    fi

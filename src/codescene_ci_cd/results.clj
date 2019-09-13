@@ -59,9 +59,9 @@
     (linebreak-between [name
                         (html-list (concat
                                     (when (seq improved)
-                                      [(str (bold "Improvements:") (comma-between improved))])
+                                      [(str (bold "Improvements:") (html-list improved))])
                                     (when (seq degraded)
-                                      [(str (bold "Degradations:") (comma-between degraded))])))])))
+                                      [(str (bold "Degradations:") (html-list degraded))])))])))
 
 (defn- entry->markdown-table [entry options url-parts]
   (let [{:keys [risk-threshold fail-on-failed-goal fail-on-declining-code-health]} options

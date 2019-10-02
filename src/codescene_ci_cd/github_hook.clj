@@ -57,7 +57,7 @@
           markdown (results/as-markdown [results] config)]
       (log/debugf "Decorate PR with comment using url %s" comments-url)
       (create-comment comments-url token markdown timeout)
-      (log/infof "Done with PR"))))
+      (log/infof "Done with PR %s" pr-number))))
 
 (defn on-pull-request [request]
   (let [{:keys [body]} request
@@ -77,7 +77,7 @@
           comments-url (commit-comments-url commits-url commit-id)]
       (log/debugf "Decorate commit with comment using url %s" comments-url)
       (create-comment comments-url token markdown timeout)
-      (log/infof "Done with commit" commit-id))))
+      (log/infof "Done with commit %s" commit-id))))
 
 (defn on-push [request]
   (let [{:keys [body]} request

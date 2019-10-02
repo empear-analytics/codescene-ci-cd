@@ -5,6 +5,27 @@
 A bridge application for integrating
 [CodeScene](https://empear.com/how-it-works/) by Empear into CI/CD build pipelines
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Overview](#overview)
+- [Capabilities](#capabilities)
+- [Usage](#usage)
+  - [Run in CI/CD pipeline](#run-in-cicd-pipeline)
+    - [Configure GitLab for CodeScene Delta Analysis](#configure-gitlab-for-codescene-delta-analysis)
+    - [Configure Circle CI/GitHub for CodeScene Delta Analysis](#configure-circle-cigithub-for-codescene-delta-analysis)
+  - [Run as a service responding on webhooks](#run-as-a-service-responding-on-webhooks)
+    - [Configure GitHub for CodeScene Delta Analysis](#configure-github-for-codescene-delta-analysis)
+    - [Configure Azure DevOps for CodeScene Delta Analysis](#configure-azure-devops-for-codescene-delta-analysis)
+- [Manual build](#manual-build)
+- [Releasing](#releasing)
+- [Contributing](#contributing)
+- [License](#license)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+## Overview
 
 CodeScene identifies and prioritizes technical debt, while at the same time uncovering and measuring social factors of the organization behind
 the system. The earlier you can react to any potential finding, the better. That’s why
@@ -178,15 +199,17 @@ To start _codescene-ci-cd_ as a service, run it without any arguments. Configura
 | CODESCENE_PASSWORD | The password for the bot user. |
 | CODESCENE_CI_CD_GITHUB_SECRET | The secret set on the webhook in GitHub. |
 | CODESCENE_CI_CD_GITHUB_TOKEN | A personal access token created in GitHub with permission to access and attach comments to commits and pull requests. |
+| CODESCENE_CI_CD_AZURE_TOKEN | A personal access token created in Azure DevOps with permission to access and attach comment threads to pull requests. |
 | CODESCENE_CI_CD_PORT | The port were the service is available. (default is 3005) |
 
 Webhooks endpoints are provided on the following URL:s
 
 | Repo service | Webhook Endpoint URL |
 | ------------- |-------------|
-| GitHub | [ServiceURL]/webhooks/github |
-| GitLab | Not available yet. |
-| BitBucket | Not available yet. |
+| GitHub | [ServiceURL]/hooks/github |
+| Azure DevOps | [ServiceURL]/hooks/azure
+| GitLab | Not yet available. |
+| BitBucket | Not yet available. |
 
 #### Configure GitHub for CodeScene Delta Analysis
 The steps to follow to configure GitHub using webhooks for triggering delta analysis are:
@@ -195,15 +218,34 @@ The steps to follow to configure GitHub using webhooks for triggering delta anal
 1. Create a [Personal Access Token](https://help.github.com/en/articles/creating-a-personal-access-token-for-the-command-line) in GitHub that can be used for accessing the API, preferrably as a dedicated CodeScene user. (That user will be visible as the comment author.) Use that value for `CODESCENE_CI_CD_GITHUB_TOKEN`.
 1. Create a [webhook](https://developer.github.com/webhooks) on the repository you want to trigger an analysis for.
 1. Copy the secret from the webhook and use as the value for `CODESCENE_CI_CD_GITHUB_SECRET`. 
-1. Set the Payload URL for the webhook to `[ServiceURL]/webhooks/github?project_id=[ProjectNbr]`. Retrieve the project number from the delta analysis URL from the CodeScene UI.
+1. Set the Payload URL for the webhook to `[ServiceURL]/hooks/github?project_id=[ProjectNbr]`. Retrieve the project number from the delta analysis URL from the CodeScene UI.
 1. Select Push and Pull Request events to trigger the webhook.
 1. Set the `CODESCENE_URL` and start the _codescene-ci-cd_ service.
+
+
+#### Configure Azure DevOps for CodeScene Delta Analysis
+The steps to follow to configure Azure using webhooks for triggering delta analysis are:
+
+1. Create a CodeScene bot user in the CodeScene UI. Use the values specified for `CODESCENE_USER` and `CODESCENE_PASSWORD`
+1. Create a [Personal Access Token](https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=azure-devops#create-personal-access-tokens-to-authenticate-access) in Azure DevOps that can be used for accessing the API, preferrably as a dedicated CodeScene user. (That user will be visible as the comment author.) Use that value for `CODESCENE_CI_CD_AZURE_TOKEN`.
+1. Create a [webhook](https://docs.microsoft.com/en-us/azure/devops/service-hooks/services/webhooks?view=azure-devops) on the project with the repository you want to trigger an analysis for.
+1. Set the webhook to trigger on `pull request updated` events with change filter `source branch changed`.
+1. Copy the secret from the webhook and use as the value for `CODESCENE_CI_CD_GITHUB_SECRET`. 
+1. Set the URL for the webhook to `[ServiceURL]/hooks/azure?project_id=[ProjectNbr]`. Retrieve the project number from the delta analysis URL from the CodeScene UI.
+1. Create another webhook for `pull request created` events with the same settings.
+1. Set the `CODESCENE_URL` and start the _codescene-ci-cd_ service.
+
 
 
 ## Manual build
 
 You can build the latest version of _codescene-ci-cd_ by running `lein uberjar`. The corresponding docker image is then built using `docker build -t empear/codescene-ci-cd . `.
 Run _codescene-ci-cd_ inside the docker image using `docker run -it empear/codescene-ci-cd [options]`
+
+## Releasing
+
+A release build is automatically triggered when pushing a release tag to a repository.
+The corresponding docker image is manually built and pushed to docker hub.
 
 ## Contributing
 

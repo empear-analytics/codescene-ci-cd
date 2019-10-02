@@ -7,6 +7,7 @@
              [gitlab-hook :as gitlab-hook]
              [pages :as pages]
              [bitbucket-hook :as bitbucket-hook]
+             [azure-hook :as azure-hook]
              [utils :as utils]]
             [ring.middleware
              [defaults :refer [api-defaults wrap-defaults]]
@@ -28,6 +29,9 @@
 
     (POST "/hooks/github" req
           (github-hook/on-hook req))
+
+    (POST "/hooks/azure" req
+          (azure-hook/on-hook req))
 
     (POST "/hooks/gitlab" req
           (gitlab-hook/on-hook req))

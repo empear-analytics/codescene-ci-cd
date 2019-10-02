@@ -3,7 +3,7 @@
   (:require [clj-http.client :as http]
             [clojure.data.json :as json]))
 
-defn get-commits
+(defn get-commits
   "Returns a list commits (maps)"
   [commits-url api-token timeout]
   (:body (http/get commits-url

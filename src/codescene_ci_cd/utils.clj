@@ -18,6 +18,11 @@
        (into {})
        (map first)))
 
+(defn comments-and-urls->codescene-comment-urls [comments-and-urls]
+  (->> comments-and-urls
+       (filter #(string/includes? (first %) codescene-identifier))
+       (map second)))
+
 (defn url-for-comment [id comments]
   (->> comments
        (filter #(= (:id %) id))

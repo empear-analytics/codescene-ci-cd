@@ -5,6 +5,27 @@
 A bridge application for integrating
 [CodeScene](https://empear.com/how-it-works/) by Empear into CI/CD build pipelines
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Overview](#overview)
+- [Capabilities](#capabilities)
+- [Usage](#usage)
+  - [Run in CI/CD pipeline](#run-in-cicd-pipeline)
+    - [Configure GitLab for CodeScene Delta Analysis](#configure-gitlab-for-codescene-delta-analysis)
+    - [Configure Circle CI/GitHub for CodeScene Delta Analysis](#configure-circle-cigithub-for-codescene-delta-analysis)
+  - [Run as a service responding on webhooks](#run-as-a-service-responding-on-webhooks)
+    - [Configure GitHub for CodeScene Delta Analysis](#configure-github-for-codescene-delta-analysis)
+    - [Configure Azure DevOps for CodeScene Delta Analysis](#configure-azure-devops-for-codescene-delta-analysis)
+- [Manual build](#manual-build)
+- [Releasing](#releasing)
+- [Contributing](#contributing)
+- [License](#license)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+## Overview
 
 CodeScene identifies and prioritizes technical debt, while at the same time uncovering and measuring social factors of the organization behind
 the system. The earlier you can react to any potential finding, the better. That’s why

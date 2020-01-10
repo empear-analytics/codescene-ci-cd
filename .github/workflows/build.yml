@@ -23,7 +23,7 @@ jobs:
       run: lein uberjar
     - name: Create Release
       id: create_release
-      if: startsWith(github.ref, 'refs/tags')
+      if: startsWith(github.ref, 'refs/tags/v')
       uses: actions/create-release@v1.0.0
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -33,8 +33,7 @@ jobs:
         draft: false
         prerelease: false
     - name: Upload Release Asset
-      id: upload-release-asset 
-      if: startsWith(github.ref, 'refs/tags')
+      if: startsWith(github.ref, 'refs/tags/v')
       uses: actions/upload-release-asset@v1.0.1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -43,3 +42,18 @@ jobs:
         asset_path: target/codescene-ci-cd.standalone.jar
         asset_name: codescene-ci-cd.standalone.jar
         asset_content_type: application/zip
+    - uses: azure/docker-login@v1
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+    - name: Publish Docker Image
+      if: startsWith(github.ref, 'refs/tags/v')
+      env:
+        GITHUB_REF: ${{ github.ref }}
+      run: |
+        export VERSION=${GITHUB_REF#refs/tags/v}
+        export IMAGE=empear/codescene-ci-cd
+        docker build -t $IMAGE:$VERSION .
+        docker tag $IMAGE:$VERSION $IMAGE:latest 
+        docker push $IMAGE:$VERSION
+        docker push $IMAGE:latest

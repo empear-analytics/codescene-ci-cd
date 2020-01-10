@@ -12,7 +12,6 @@
 (defn- create-comment [threads-url api-token markdown timeout]
   (let [comments (azure-api/get-comments threads-url api-token timeout)
         comment-urls (utils/comments-and-urls->codescene-comment-urls comments)
-        _ (println comment-urls)
         text (utils/with-codescene-identifier markdown)]
     (doseq [comment-url comment-urls]
       (log/debugf "Remove old Azure Comment with url %s..." comment-url)

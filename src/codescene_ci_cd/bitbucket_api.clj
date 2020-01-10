@@ -3,8 +3,21 @@
   (:require [clj-http.client :as http]
             [clojure.data.json :as json]))
 
-(defn- header-with-pat [api-token]
-  {"Authorization" (format "Bearer %s" api-token)})
+(defn get-commits
+  "Returns a list of commits (maps)"
+  [commits-url user password timeout]
+  (:body (http/get commits-url
+                   {:basic-auth     [user password]
+                    :as             :json-strict
+                    :socket-timeout timeout
+                    :conn-timeout   timeout})))
+
+(defn get-commit-ids
+  "Returns a list of commit ids"
+  [commits-url user password timeout]
+  (->> (get-commits commits-url user password timeout)
+       :values
+       (map :hash)))
 
 (defn- comments-url [api-url user repo pull-request-id]
   (format "%s/repositories/%s/%s/pullrequests/%d/comments" api-url user repo pull-request-id))
@@ -19,14 +32,18 @@
                          :as             :json-strict
                          :socket-timeout timeout
                          :conn-timeout   timeout}))
-       :values
-       (map (fn [x] [(:id x) (get-in x [:content :raw])]))
-       (into {})))
+       :values))
+
+(defn get-comments-and-urls [comments-url user password timeout]
+  (->> (get-comments comments-url user password timeout)
+       (map (fn [x] [(get-in x [:content :raw]) (get-in x [:links :self :href])]))))
 
 (defn get-pull-request-comments [api-url user password repo pull-request-id timeout]
   "Returns a map of id->comment"
   (let [comments-url (comments-url api-url user repo pull-request-id)]
-    (get-comments comments-url user password timeout)))
+    (->> (get-comments comments-url user password timeout)
+         (map (fn [x] [(:id x) (get-in x [:content :raw])]))
+         (into {}))))
 
 (defn delete-comment [comment-url user password timeout]
   "Deletes a comment, returns true if succesful"
@@ -62,9 +79,13 @@
 
 (comment
   (def api-url "https://bitbucket.org/api/2.0")
-  (def api-token "")
-  (def user "knorrest")
-  (def repo "test1")
-  (get-pull-request-comments api-url user api-token repo 1 3000)
-  (delete-pull-request-comment api-url user api-token repo 1 100806278 3000)
-  (create-pull-request-comment api-url user api-token repo 1 "hohoho" 3000))
+  (def password (System/getenv "CODESCENE_CI_CD_BITBUCKET_APP_PASSWORD"))
+  (def user (System/getenv "CODESCENE_CI_CD_BITBUCKET_USER"))
+  (def repo "analysis-target")
+  (def commits-url "https://api.bitbucket.org/2.0/repositories/knorrest/analysis-target/pullrequests/2/commits")
+  (def comments-url "https://api.bitbucket.org/2.0/repositories/knorrest/analysis-target/pullrequests/2/comments")
+  (get-commit-ids commits-url user password 3000)
+  (get-comments-and-urls comments-url user password 3000)
+  (get-pull-request-comments api-url user password repo 1 3000)
+  (delete-pull-request-comment api-url user password repo 1 100806278 3000)
+  (create-pull-request-comment api-url user password repo 1 "hohoho" 3000))

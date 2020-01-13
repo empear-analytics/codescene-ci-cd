@@ -24,7 +24,6 @@
 (defn get-commits
   "Returns a list of commits (maps)"
   [commits-url api-token timeout]
-  (clojure.pprint/pprint commits-url)
   (:body (http/get commits-url
                    {:headers        (header-with-pat api-token)
                     :as             :json-strict
@@ -79,11 +78,9 @@
 
 (defn create-note [notes-url api-token note-kw text timeout]
   "Creates comment and returns the comment id"
-  (println notes-url)
-  (println text)
   (->> (:body (http/post notes-url
                          {:headers        (header-with-pat api-token)
-                          :query-params   {note-kw text}
+                          :form-params   {note-kw text}
                           :content-type :json
                           :socket-timeout timeout
                           :conn-timeout   timeout}))
@@ -119,3 +116,4 @@
   (update-merge-request-note api-url api-token project-id 1 188318646 "Bla bla blo" 3000)
   (get-merge-request-note api-url api-token project-id 1 166512857 3000)
   (delete-merge-request-note api-url api-token project-id 1 188318646 3000))
+

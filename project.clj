@@ -1,4 +1,4 @@
-(defproject codescene-ci-cd "1.1.7"
+(defproject codescene-ci-cd "1.1.8"
   :description "A bridge to CodeScene's delta analysis"
   :url "https://github.com/empear-analytics/codescene-ci-cd"
   :dependencies [[org.clojure/clojure "1.10.1"]

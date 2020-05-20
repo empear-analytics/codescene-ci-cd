@@ -15,8 +15,11 @@ A bridge application for integrating
   - [Run in CI/CD pipeline](#run-in-cicd-pipeline)
     - [Configure GitLab for CodeScene Delta Analysis](#configure-gitlab-for-codescene-delta-analysis)
     - [Configure Circle CI/GitHub for CodeScene Delta Analysis](#configure-circle-cigithub-for-codescene-delta-analysis)
+    - [Configure GitHub Actions for CodeScene Delta Analysis](#configure-github-actions-for-codescene-delta-analysis)
   - [Run as a service responding on webhooks](#run-as-a-service-responding-on-webhooks)
     - [Configure GitHub for CodeScene Delta Analysis](#configure-github-for-codescene-delta-analysis)
+    - [Configure Bitbucket for CodeScene Delta Analysis](#configure-bitbucket-for-codescene-delta-analysis)
+    - [Configure GitLab for CodeScene Delta Analysis](#configure-gitlab-for-codescene-delta-analysis-1)
     - [Configure Azure DevOps for CodeScene Delta Analysis](#configure-azure-devops-for-codescene-delta-analysis)
 - [Manual build](#manual-build)
 - [Releasing](#releasing)
@@ -187,6 +190,28 @@ The steps to follow for Circle CI/GitHub integration are:
 1. Add delta analysis job(s) to _config.yml_.
 
 Note that to DRY up the _config.yml_ the codescene-jobs one could optionally create a Circle CI [ORB](https://circleci.com/docs/2.0/creating-orbs/) containing the delta analysis jobs.
+
+
+#### Configure GitHub Actions for CodeScene Delta Analysis
+
+To enable the CodeScene integration in GitHub Actions, add a workflow with jobs running _codescene-ci-cd_ to the projects _.github_ folder similar to the example provided  [here](templates/github/delta-analysis.yml).
+
+The `codescene-ci-cd` job runs on pull requests and submits the results as a merge request comment.
+
+In these examples, the `CODESCENE-*` variables are delta analysis specific variables that should be configured as GitHub secrets.
+
+| Variable | Description |
+| ------------- |-------------|
+| CODESCENE_DELTA_ANALYSIS_URL | The full URL to the [CodeScene Delta Analysis REST API](https://docs.enterprise.codescene.io/versions/3.2.3/guides/delta/automated-delta-analyses.html#the-rest-api-for-delta-analyses). Retrievable from the CodeScene GUI. |
+| CODESCENE_USER | A bot user created in codesene for accessing the API. |
+| CODESCENE_PASSWORD | The password for the bot user.
+
+
+The steps to follow for GitHub Actions integration are:
+1. Retrieve the delta analysis URL from the CodeScene UI.
+1. Create a CodeScene bot user in the CodeScene UI.
+1. Add the `CODESCENE-*` variables specified in the table above as secrets through the GitHub UI, . 
+1. Add a delta analysis workflow to _.github_.
 
 ### Run as a service responding on webhooks
 

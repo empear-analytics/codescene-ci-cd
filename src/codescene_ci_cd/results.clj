@@ -12,7 +12,7 @@
   (str tag s tag))
 
 (defn- bold [s]
-  (wrap " "(wrap "**" s)))
+  (wrap " " (wrap "**" s)))
 
 (defn- wrap-and-join [tag coll]
   (str tag (string/join tag coll) tag))
@@ -48,83 +48,110 @@
 (defn- delta-description->text [delta-description]
   (let [{:keys [name degraded improved]} delta-description]
     (newline-between (concat
-                      [(str \tab \tab name)]
-                      (when (seq improved)
-                        [(str \tab \tab "- Improvements: " (comma-between improved))])
-                      (when (seq degraded)
-                        [(str \tab \tab "- Degradations: " (comma-between degraded))])))))
+                       [(str \tab \tab name)]
+                       (when (seq improved)
+                         [(str \tab \tab "- Improvements: " (comma-between improved))])
+                       (when (seq degraded)
+                         [(str \tab \tab "- Degradations: " (comma-between degraded))])))))
 
 (defn- delta-description->markdown [delta-description]
   (let [{:keys [name degraded improved]} delta-description]
     (linebreak-between [name
                         (html-list (concat
-                                    (when (seq improved)
-                                      [(str (bold "Improvements:") (html-list improved))])
-                                    (when (seq degraded)
-                                      [(str (bold "Degradations:") (html-list degraded))])))])))
+                                     (when (seq improved)
+                                       [(str (bold "Improvements:") (html-list improved))])
+                                     (when (seq degraded)
+                                       [(str (bold "Degradations:") (html-list degraded))])))])))
+
+(defn- new-files-warning->text
+  [{:keys [name review] :as _warning}]
+  (newline-between (concat
+                     [(str \tab \tab name)]
+                     (when (seq review)
+                       (let [formatted-items (map (fn [{:keys [title description]}]
+                                                    (str title ": " description))
+                                                  review)]
+                         [(str \tab \tab "- " (comma-between formatted-items))])))))
+
+(defn- new-files-warning->markdown
+  [{:keys [name review] :as _warning}]
+  (linebreak-between [name
+                      (html-list (if (seq review)
+                                   (let [formatted-items (map (fn [{:keys [title description]}]
+                                                                (str (bold title) ": " description))
+                                                              review)]
+                                     formatted-items)
+                                   []))]))
 
 (defn- entry->markdown-table [entry options url-parts]
-  (let [{:keys [risk-threshold fail-on-failed-goal fail-on-declining-code-health]} options
+  (let [{:keys [_risk-threshold fail-on-failed-goal fail-on-declining-code-health]} options
         {:keys [protocol host port]} url-parts
-        {:keys [title view result commits goal-has-failed code-health-declined hits-risk-threshold]} entry
-        {:keys [risk description code-owners-for-quality-gates 
+        {:keys [_title view result _commits goal-has-failed code-health-declined _hits-risk-threshold new-files-info]} entry
+        {:keys [risk description code-owners-for-quality-gates
                 warnings improvements code-health-delta-descriptions]} result
-        view-url (format "%s//%s:%d%s" protocol host port view)]
+        _view-url (format "%s//%s:%d%s" protocol host port view)]
     (concat
-     [(md-table-row ["" (bold "CodeScene Delta Analysis Results")])]
-     [(md-table-row ["-" "-"])]
-     [(md-table-row [(bold "Risk") risk])]
-     (when (or fail-on-failed-goal fail-on-declining-code-health)
-       [(md-table-row [(bold "Quality Gates") (if (or goal-has-failed code-health-declined) "Fail" "OK")])])
-     [(md-table-row [(bold "Description") description])]
-     (when (seq code-owners-for-quality-gates)
-       [(md-table-row [(bold "Code Owners") (linebreak-between code-owners-for-quality-gates)])])
-     (when (seq commits)
-       [(md-table-row [(bold "Commits") (linebreak-between commits)])])
-     (when (seq warnings)
-       [(md-table-row [(bold "Warnings") (linebreak-between (map warning->markdown warnings))])])
-     (when (seq improvements)
-       [(md-table-row [(bold "Improvements") (linebreak-between improvements)])])
-     (when (seq code-health-delta-descriptions)
-       [(md-table-row [(bold "Code Health Delta Descriptions:") (linebreak-between (map delta-description->markdown code-health-delta-descriptions))])])
-     [\newline])))
+      [(md-table-row ["" (bold "CodeScene Delta Analysis Results")])]
+      [(md-table-row [" --- " " ---- "])]
+      [(md-table-row [(bold "Risk") risk])]
+      (when (or fail-on-failed-goal fail-on-declining-code-health)
+        [(md-table-row [(bold "Quality Gates") (if (or goal-has-failed code-health-declined) "Fail" "OK")])])
+      [(md-table-row [(bold "Description") description])]
+      (when (seq code-owners-for-quality-gates)
+        [(md-table-row [(bold "Code Owners") (linebreak-between code-owners-for-quality-gates)])])
+      (when (seq warnings)
+        [(md-table-row [(bold "Warnings") (linebreak-between (map warning->markdown warnings))])])
+      (when (seq improvements)
+        [(md-table-row [(bold "Improvements") (linebreak-between improvements)])])
+      (when (seq code-health-delta-descriptions)
+        [(md-table-row [(bold "Code Health Delta Descriptions")
+                        (linebreak-between (map delta-description->markdown code-health-delta-descriptions))])])
+      (when (seq new-files-info)
+        [(md-table-row [(bold "New Files with Low Code Health")
+                        (linebreak-between
+                          (concat
+                            [(:summary new-files-info)]
+                            (map new-files-warning->markdown (:warnings new-files-info))))])])
+      [\newline])))
 
 (defn- entry->text [entry options url-parts]
-  (let [{:keys [risk-threshold fail-on-failed-goal fail-on-declining-code-health]} options
+  (let [{:keys [_risk-threshold fail-on-failed-goal fail-on-declining-code-health]} options
         {:keys [protocol host port]} url-parts
-        {:keys [title view result commits goal-has-failed code-health-declined hits-risk-threshold]} entry
-        {:keys [risk description code-owners-for-quality-gates 
+        {:keys [_title view result _commits goal-has-failed code-health-declined _hits-risk-threshold new-files-info]} entry
+        {:keys [risk description code-owners-for-quality-gates
                 warnings improvements code-health-delta-descriptions]} result
-        view-url (format "%s//%s:%d%s" protocol host port view)]
+        _view-url (format "%s//%s:%d%s" protocol host port view)]
     (concat
 
-     ["CodeScene Delta Analysis Results:"]
-     [(str \tab "Risk: " risk)]
-     (when (or fail-on-failed-goal fail-on-declining-code-health)
-       [(str \tab "Quality Gates:" \space (if (or goal-has-failed code-health-declined) "Fail" "OK"))])
-     [(str \tab "Description:" \space description)]
-     (when (seq commits)
-       [(str \tab "Commits:" \space (comma-between commits))])
-     (when (seq code-owners-for-quality-gates)
-       [(str \tab "Code Owners:" \newline (newline-between (map #(str \tab \tab %) code-owners-for-quality-gates)))])
-     (when (seq warnings)
-       [(str \tab "Warnings:" \newline (newline-between (map warning->text warnings)))])
-     (when (seq improvements)
-       [(str \tab "Improvements:" \newline (newline-between (map #(str \tab \tab %) improvements)))])
-     (when (seq code-health-delta-descriptions)
-       [(str \tab "Code Health Delta Descriptions:" \newline (newline-between (map delta-description->text code-health-delta-descriptions)))])
-     [\newline])))
+      ["CodeScene Delta Analysis Results:"]
+      [(str \tab "Risk: " risk)]
+      (when (or fail-on-failed-goal fail-on-declining-code-health)
+        [(str \tab "Quality Gates:" \space (if (or goal-has-failed code-health-declined) "Fail" "OK"))])
+      [(str \tab "Description:" \space description)]
+      (when (seq code-owners-for-quality-gates)
+        [(str \tab "Code Owners:" \newline (newline-between (map #(str \tab \tab %) code-owners-for-quality-gates)))])
+      (when (seq warnings)
+        [(str \tab "Warnings:" \newline (newline-between (map warning->text warnings)))])
+      (when (seq improvements)
+        [(str \tab "Improvements:" \newline (newline-between (map #(str \tab \tab %) improvements)))])
+      (when (seq code-health-delta-descriptions)
+        [(str \tab "Code Health Delta Descriptions:" \newline (newline-between (map delta-description->text code-health-delta-descriptions)))])
+      (when (seq new-files-info)
+        [(str \tab "New Files with Low Code Health:" \newline \tab (:summary new-files-info) \newline
+              (newline-between (map new-files-warning->text (:warnings new-files-info))))])
+      [\newline])))
 
 (defn as-markdown [entries options]
+  "Convert result to markdown (uses html tags)."
   (let [{:keys [delta-analysis-url]} options
         url-parts (url-parts delta-analysis-url)]
     (newline-between (mapcat #(entry->markdown-table % options url-parts) entries))))
 
 (defn as-text [entries options]
+  "Convert result to text for use in console output"
   (let [{:keys [delta-analysis-url]} options
         url-parts (url-parts delta-analysis-url)]
     (newline-between (mapcat #(entry->text % options url-parts) entries))))
-
 
 (comment
   (def options

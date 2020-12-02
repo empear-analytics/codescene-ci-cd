@@ -16,11 +16,6 @@ A bridge application for integrating
     - [Configure GitLab for CodeScene Delta Analysis](#configure-gitlab-for-codescene-delta-analysis)
     - [Configure Circle CI/GitHub for CodeScene Delta Analysis](#configure-circle-cigithub-for-codescene-delta-analysis)
     - [Configure GitHub Actions for CodeScene Delta Analysis](#configure-github-actions-for-codescene-delta-analysis)
-  - [Run as a service responding on webhooks](#run-as-a-service-responding-on-webhooks)
-    - [Configure GitHub for CodeScene Delta Analysis](#configure-github-for-codescene-delta-analysis)
-    - [Configure Bitbucket for CodeScene Delta Analysis](#configure-bitbucket-for-codescene-delta-analysis)
-    - [Configure GitLab for CodeScene Delta Analysis](#configure-gitlab-for-codescene-delta-analysis-1)
-    - [Configure Azure DevOps for CodeScene Delta Analysis](#configure-azure-devops-for-codescene-delta-analysis)
 - [Manual build](#manual-build)
 - [Releasing](#releasing)
 - [Contributing](#contributing)
@@ -43,10 +38,6 @@ The codescene-ci-cd application is runnable from build scripts in a CI-CD system
 
 ![Component Diagram](analysis-results.png)
 
-It is also possible to run codescene-ci-cd as a service that can respond to webhooks directly from the repo provider:
-
-
-![Component Diagram](component-diagram-service.png)
 
 ## Capabilities
 
@@ -212,76 +203,6 @@ The steps to follow for GitHub Actions integration are:
 1. Create a CodeScene bot user in the CodeScene UI.
 1. Add the `CODESCENE-*` variables specified in the table above as secrets through the GitHub UI, . 
 1. Add a delta analysis workflow to _.github_.
-
-### Run as a service responding on webhooks
-
-To start _codescene-ci-cd_ as a service, run it without any arguments. Configuration is done by setting some environment variables:
-
-| Variable | Description |
-| ------------- |-------------|
-| CODESCENE_URL | The URL to the CodeScene instance used for delta analysis. |
-| CODESCENE_USER | A bot user created in codesene for accessing the API. |
-| CODESCENE_PASSWORD | The password for the bot user. |
-| CODESCENE_CI_CD_GITHUB_SECRET | The secret set on the webhook in GitHub. |
-| CODESCENE_CI_CD_GITHUB_TOKEN | A personal access token created in GitHub with permission to access and attach comments to commits and pull requests. |
-| CODESCENE_CI_CD_AZURE_TOKEN | A personal access token created in Azure DevOps with permission to access and attach comment threads to pull requests. |
-| CODESCENE_CI_CD_PORT | The port were the service is available. (default is 3005) |
-
-Webhooks endpoints are provided on the following URL:s
-
-| Repo service | Webhook Endpoint URL |
-| ------------- |-------------|
-| GitHub | [ServiceURL]/hooks/github |
-| BitBucket | [ServiceURL]/hooks/bitbucket |
-| GitLab | [ServiceURL]/hooks/gitlab |
-| Azure DevOps | [ServiceURL]/hooks/azure |
-
-#### Configure GitHub for CodeScene Delta Analysis
-The steps to follow to configure GitHub using webhooks for triggering delta analysis are:
-
-1. Create a CodeScene bot user in the CodeScene UI. Use the values specified for `CODESCENE_USER` and `CODESCENE_PASSWORD`
-1. Create a [Personal Access Token](https://help.github.com/en/articles/creating-a-personal-access-token-for-the-command-line) in GitHub that can be used for accessing the API, preferrably as a dedicated CodeScene user. (That user will be visible as the comment author.) Use that value for `CODESCENE_CI_CD_GITHUB_TOKEN`.
-1. Create a [webhook](https://developer.github.com/webhooks) on the repository you want to trigger an analysis for.
-1. Copy the secret from the webhook and use as the value for `CODESCENE_CI_CD_GITHUB_SECRET`. 
-1. Set the Payload URL for the webhook to `[ServiceURL]/hooks/github?project_id=[ProjectNbr]`. Retrieve the project number from the delta analysis URL from the CodeScene UI.
-1. Select Push and Pull Request events to trigger the webhook.
-1. Set the `CODESCENE_URL` and start the _codescene-ci-cd_ service.
-
-#### Configure Bitbucket for CodeScene Delta Analysis
-The steps to follow to configure Bitbucket using webhooks for triggering delta analysis are:
-
-1. Create a CodeScene bot user in the CodeScene UI. Use the values specified for `CODESCENE_USER` and `CODESCENE_PASSWORD`
-1. Create an [App Password](https://confluence.atlassian.com/bitbucket/app-passwords-828781300.html) in Bitbucket that can be used for accessing the API, preferrably as a dedicated CodeScene user. (That user will be visible as the comment author.) Use that value for `CODESCENE_CI_CD_BITBUCKET_APP_PASSWORD`.
-1. Create a [webhook](https://confluence.atlassian.com/bitbucket/manage-webhooks-735643732.html) on the repository you want to trigger an analysis for.
-1. Set the URL for the webhook to `[ServiceURL]/hooks/bitbucket?project_id=[ProjectNbr]`. Retrieve the project number from the delta analysis URL from the CodeScene UI.
-1. Select Push and/or Pull Request Created/Updated events to trigger the webhook.
-1. Set the `CODESCENE_URL` and start the _codescene-ci-cd_ service.
-
-#### Configure GitLab for CodeScene Delta Analysis
-The steps to follow to configure Bitbucket using webhooks for triggering delta analysis are:
-
-1. Create a CodeScene bot user in the CodeScene UI. Use the values specified for `CODESCENE_USER` and `CODESCENE_PASSWORD`
-1. Create an [Personal Access Token](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html) in GitLab that can be used for accessing the API, preferrably as a dedicated CodeScene user. (That user will be visible as the comment author.) Use that value for `CODESCENE_CI_CD_GITLAB_TOKEN`.
-1. Create a [webhook](https://docs.gitlab.com/ee/user/project/integrations/webhooks.html) on the repository you want to trigger an analysis for.
-1. Set a secret for the webhook and use it as the value for `CODESCENE_CI_CD_GITHUB_SECRET`. 
-1. Set the URL for the webhook to `[ServiceURL]/hooks/gitlab?project_id=[ProjectNbr]`. Retrieve the project number from the delta analysis URL from the CodeScene UI.
-1. Select Push and/or Merge Request events to trigger the webhook.
-1. Set the `CODESCENE_URL` and start the _codescene-ci-cd_ service.
-
-
-#### Configure Azure DevOps for CodeScene Delta Analysis
-The steps to follow to configure Azure using webhooks for triggering delta analysis are:
-
-1. Create a CodeScene bot user in the CodeScene UI. Use the values specified for `CODESCENE_USER` and `CODESCENE_PASSWORD`
-1. Create a [Personal Access Token](https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=azure-devops#create-personal-access-tokens-to-authenticate-access) in Azure DevOps that can be used for accessing the API, preferrably as a dedicated CodeScene user. (That user will be visible as the comment author.) Use that value for `CODESCENE_CI_CD_AZURE_TOKEN`.
-1. Create a [webhook](https://docs.microsoft.com/en-us/azure/devops/service-hooks/services/webhooks?view=azure-devops) on the project with the repository you want to trigger an analysis for.
-1. Set the webhook to trigger on `pull request updated` events with change filter `source branch changed`.
-1. Copy the secret from the webhook and use as the value for `CODESCENE_CI_CD_GITHUB_SECRET`. 
-1. Set the URL for the webhook to `[ServiceURL]/hooks/azure?project_id=[ProjectNbr]`. Retrieve the project number from the delta analysis URL from the CodeScene UI.
-1. Create another webhook for `pull request created` events with the same settings.
-1. Set the `CODESCENE_URL` and start the _codescene-ci-cd_ service.
-
-
 
 ## Manual build
 

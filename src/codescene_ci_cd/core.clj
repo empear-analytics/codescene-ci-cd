@@ -36,6 +36,7 @@
    [nil "--previous-commit SHA" "Previous Commit Id"]
    [nil "--current-commit SHA" "Current Commit Id"]
    [nil "--base-revision SHA" "Base Revision Id"]
+   [nil "--external-review-id ID" "External Review Id"]
    ;; GitLab settings
    [nil "--gitlab-api-url URL" "GitLab API URL"]
    [nil "--gitlab-api-token TOKEN" "GitLab API Token"]

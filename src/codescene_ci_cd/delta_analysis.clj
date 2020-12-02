@@ -40,10 +40,10 @@
       entry)))
 
 (defn- run-delta-analysis-and-attach-info [config commits]
-  (let [{:keys [codescene-delta-analysis-url codescene-user codescene-password codescene-repository
+  (let [{:keys [codescene-delta-analysis-url codescene-user codescene-password codescene-repository external-review-id
                 codescene-coupling-threshold-percent http-timeout]} config]
     (log/info (format "Running delta analysis on commits (%s) in repository %s." (string/join "," commits) codescene-repository))
-    (-> (codescene/run-delta-analysis-on-commits codescene-delta-analysis-url codescene-user codescene-password codescene-repository
+    (-> (codescene/run-delta-analysis-on-commits codescene-delta-analysis-url codescene-user codescene-password codescene-repository external-review-id
                                                  codescene-coupling-threshold-percent commits http-timeout)
         (assoc :title (first commits) :commits commits))))
 

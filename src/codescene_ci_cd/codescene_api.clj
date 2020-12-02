@@ -2,13 +2,14 @@
   "Wraps the http API to CodeScene delta analysis"
   (:require [clj-http.client :as http]))
 
-(defn run-delta-analysis-on-commits [delta-analysis-url user password repository
+(defn run-delta-analysis-on-commits [delta-analysis-url user password repository external-review-id
                                      coupling-threshold-percent commits timeout]
   (-> (http/post delta-analysis-url
                  {:basic-auth     [user password]
                   :content-type   :json
                   :form-params    {:commits                    commits
                                    :repository                 repository
+                                   :external_review_id         external-review-id
                                    :coupling_threshold_percent coupling-threshold-percent
                                    :use_biomarkers             true}
                   :as             :json
@@ -21,8 +22,9 @@
   (def user "bot")
   (def password "")
   (def repository "analysis-target")
+  (def external-review-id "SomeId")
   (def coupling-threshold-percent 45)
   (def commits ["c258fa5"])
   (def timeout 1000)
-  (run-delta-analysis-on-commits delta-analysis-url user password repository
+  (run-delta-analysis-on-commits delta-analysis-url user password repository external-review-id
                                  coupling-threshold-percent commits timeout))

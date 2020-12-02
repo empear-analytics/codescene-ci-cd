@@ -108,26 +108,26 @@
         (when create-gitlab-note
           [(when (empty? gitlab-api-url) "GitLab API URL not specified")
            (when (empty? gitlab-api-token) "GitLab API token not specified")
-           (when (empty? gitlab-project-id) "GitLab Project Id not specified")
-           (when (empty? gitlab-merge-request-iid) "GitLab Merge request IID not specified")])
+           (when-not (some? gitlab-project-id) "GitLab Project Id not specified")
+           (when-not (some? gitlab-merge-request-iid) "GitLab Merge request IID not specified")])
         (when create-github-comment
           [(when (empty? github-api-url) "GitHub API URL not specified")
            (when (empty? github-api-token) "GitHub API token not specified")
            (when (empty? github-owner) "GitHub repository owner not specified")
            (when (empty? github-repo) "GitHub repository name not specified")
-           (when (empty? github-pull-request-id) "GitHub pull request ID not specified")])
+           (when-not (some? github-pull-request-id) "GitHub pull request ID not specified")])
         (when create-bitbucket-comment
           [(when (empty? bitbucket-api-url) "BitBucket API URL not specified")
            (when (empty? bitbucket-user) "BitBucket user not specified")
            (when (empty? bitbucket-password) "BitBucket password not specified")
            (when (empty? bitbucket-repo) "BitBucket repository name not specified")
-           (when (empty? bitbucket-pull-request-id) "BitBucket pull request ID not specified")])
+           (when-not (some? bitbucket-pull-request-id) "BitBucket pull request ID not specified")])
         (when create-azure-comment
           [(when (empty? azure-api-url) "Azure API URL not specified")
            (when (empty? azure-api-token) "Azure API token not specified")
            (when (empty? azure-project) "Azure project name not specified")
            (when (empty? azure-repo) "Azure repository name not specified")
-           (when (empty? azure-pull-request-id) "Azure pull request ID not specified")])))))
+           (when-not (some? azure-pull-request-id) "Azure pull request ID not specified")])))))
 
 (defn parse-args
   [args]

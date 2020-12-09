@@ -81,6 +81,7 @@ Options:
         --previous-commit SHA                       Previous Commit Id
         --current-commit SHA                        Current Commit Id
         --base-revision SHA                         Base Revision Id
+        --external-review-id ID                     External Review Id
         --gitlab-api-url URL                        GitLab API URL
         --gitlab-api-token TOKEN                    GitLab API Token
         --gitlab-project-id ID                      GitLab Project ID
@@ -95,12 +96,17 @@ Options:
         --bitbucket-password PASSWORD               BitBucket Password
         --bitbucket-repo REPO                       BitBucket Repository Name
         --bitbucket-pull-request-id ID              BitBucket Pull Request ID
+        --azure-api-url URL                         Azure API URL
+        --azure-api-token                           Azure API Token
+        --azure-project                             Azure Project Name
+        --azure-repo                                Azure Repository Name
+        --azure-pull-request-id                     Azure Pull Request ID
         --result-path FILENAME                      Path where JSON output is generated
         --http-timeout TIMEOUT-MS                   Timeout for http API calls
 ```
 In a typical build environment, most of these options are common to all projects, and are thus best defined as variables set in the CI/CD-system, see examples below.
 
-The `codescene-*` options specify how to connect to CodeScene and must match the settings in codescene itself. The `bitbucket-*`, `gitlab-*` and `github-*` options specify how to connect to the respective repo provider for creating comments on Merge/Pull Requests. See examples below for details. 
+The `codescene-*` options specify how to connect to CodeScene and must match the settings in codescene itself. The `bitbucket-*`, `gitlab-*`, `github-*` and `azure-*` options specify how to connect to the respective repo provider for creating comments on Merge/Pull Requests. See examples below for details. 
 
 Flag options are used to enable analysis and gates in _codescene-ci-cd_ - by default nothing is enabled. 
 
@@ -203,6 +209,26 @@ The steps to follow for GitHub Actions integration are:
 1. Create a CodeScene bot user in the CodeScene UI.
 1. Add the `CODESCENE-*` variables specified in the table above as secrets through the GitHub UI, . 
 1. Add a delta analysis workflow to _.github_.
+
+#### Configure Jenkins pipelines for CodeScene Delta Analysis
+
+To enable the CodeScene integration in Jenkins Pipeline, add a multi-branch pipeline configuration, and set it up to to run _codescene-ci-cd_ by adding a Jenkinsfile with a pipeline similar to the example provided [here](templates/jenkins/Jenkinsfile) to your project repository. Setup the pipeline configuration to run on pull requests.
+
+In these examples, the `CODESCENE-*` variables are delta analysis specific variables that should be configured as secret credentials in Jenkins.
+
+| Variable | Description |
+| ------------- |-------------|
+| CODESCENE_DELTA_ANALYSIS_URL | The full URL to the [CodeScene Delta Analysis REST API](https://docs.enterprise.codescene.io/versions/3.2.3/guides/delta/automated-delta-analyses.html#the-rest-api-for-delta-analyses). Retrievable from the CodeScene GUI. |
+| CODESCENE_USER | A bot user created in codesene for accessing the API. |
+| CODESCENE_PASSWORD | The password for the bot user.
+
+
+The steps to follow for Jenkins Pipeline integration are:
+1. Retrieve the delta analysis URL from the CodeScene UI.
+1. Create a CodeScene bot user in the CodeScene UI.
+1. Add the `CODESCENE-*` variables specified in the table above as secrets through the GitHub UI, . 
+1. Add a Jenkinsfile containing the delta analysis pipeline to your repository.
+1. Create a Multibranch Pipeline in Jenkins, using Jenkinsfile in the repository.
 
 ## Manual build
 

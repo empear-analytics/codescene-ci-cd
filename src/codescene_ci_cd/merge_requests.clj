@@ -1,9 +1,9 @@
 (ns codescene-ci-cd.merge-requests
-  (:require [clojure.string :as string]
-            [codescene-ci-cd.github-api :as github]
+  (:require [codescene-ci-cd.azure-api :as azure]
             [codescene-ci-cd.bitbucket-api :as bitbucket]
-            [codescene-ci-cd.results :as results]
+            [codescene-ci-cd.github-api :as github]
             [codescene-ci-cd.gitlab-api :as gitlab]
+            [codescene-ci-cd.results :as results]
             [taoensso.timbre :as log]
             [codescene-ci-cd.utils :as utils]))
 
@@ -42,3 +42,16 @@
       (bitbucket/delete-pull-request-comment bitbucket-api-url bitbucket-user bitbucket-password bitbucket-repo bitbucket-pull-request-id comment-id http-timeout))
     (bitbucket/create-pull-request-comment bitbucket-api-url bitbucket-user bitbucket-password bitbucket-repo bitbucket-pull-request-id
                                            (utils/with-codescene-identifier markdown) http-timeout)))
+
+(defn create-azure-comment [options results]
+  (let [{:keys [azure-api-url azure-api-token azure-project azure-repo azure-pull-request-id http-timeout]} options
+        comments (azure/get-comments azure-api-url azure-api-token azure-project azure-repo azure-pull-request-id http-timeout)
+        comment-urls (utils/comments-and-urls->codescene-comment-urls comments)      
+        markdown (results/as-markdown results options)]
+    (doseq [comment-url comment-urls]
+      (log/debugf "Remove old Azure Comment with url %s..." comment-url)
+      (let [comment-url (str comment-url "?api-version=5.1")]
+        (azure/delete-comment comment-url azure-api-token http-timeout)))
+    (log/debug "Create new Azure Comment...")
+    (azure/create-pull-request-comment azure-api-url azure-api-token azure-project azure-repo azure-pull-request-id
+                                      (utils/with-codescene-identifier markdown) http-timeout)))

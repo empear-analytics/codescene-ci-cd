@@ -3,6 +3,9 @@
   (:require [clj-http.client :as http]
             [clojure.data.json :as json]))
 
+(defn- threads-url [api-url project repo pull-request-id]
+  (format "%s/%s/_apis/git/repositories/%s/pullrequests/%s/threads" api-url project repo pull-request-id))
+
 (defn get-commits
   "Returns a list commits (maps)"
   [commits-url api-token timeout]
@@ -21,16 +24,17 @@
 
 (defn get-comments 
   "Returns tuples [content, url]"
-  [threads-url api-token timeout]
-  (->> (:body (http/get threads-url
-                        {:basic-auth     ["" api-token]
-                         :as             :json-strict
-                         :socket-timeout timeout
-                         :conn-timeout   timeout}))
-       :value
-       (mapcat :comments)
-       (filter #(some? (:content %)))
-       (map (fn [x] [(:content x) (get-in x [:_links :self :href])]))))
+  [api-url api-token project repo pull-request-id timeout]
+  (let [threads-url (threads-url api-url project repo pull-request-id)]
+    (->> (:body (http/get threads-url
+                         {:basic-auth     ["" api-token]
+                          :as             :json-strict
+                          :socket-timeout timeout
+                          :conn-timeout   timeout}))
+        :value
+        (mapcat :comments)
+        (filter #(some? (:content %)))
+        (map (fn [x] [(:content x) (get-in x [:_links :self :href])])))))
 
 (defn delete-comment 
   "Deletes a comment, returns true if succesful"
@@ -43,14 +47,19 @@
   true)
 
 (defn create-comment [threads-url api-token text timeout]
-  "Creates comment thread and returns the comment thread id"
   (->> (:body (http/post threads-url
-                         {:basic-auth     ["" api-token]
-                          :body           (json/write-str {:comments [{:content text}]})
-                          :content-type :json
-                          :socket-timeout timeout
-                          :conn-timeout   timeout}))
-       :id))
+                           {:basic-auth     ["" api-token]
+                            :body           (json/write-str {:comments [{:content text}]})
+                            :content-type :json
+                            :socket-timeout timeout
+                            :conn-timeout   timeout}))
+         :id))
+
+(defn create-pull-request-comment
+  "Creates comment thread and returns the comment thread id"
+  [api-url api-token project repo pull-request-id text timeout]
+  (let [threads-url (threads-url api-url project repo pull-request-id)]
+    (create-comment threads-url api-token text timeout)))
 
 (comment
   (def api-url "https://bitbucket.org/api/2.0")

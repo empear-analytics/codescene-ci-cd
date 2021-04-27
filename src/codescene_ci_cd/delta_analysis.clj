@@ -41,10 +41,10 @@
 
 (defn- run-delta-analysis-and-attach-info [config commits]
   (let [{:keys [codescene-delta-analysis-url codescene-user codescene-password codescene-repository external-review-id
-                codescene-coupling-threshold-percent http-timeout]} config]
+                codescene-coupling-threshold-percent http-timeout current-commit]} config]
     (log/info (format "Running delta analysis on commits (%s) in repository %s." (string/join "," commits) codescene-repository))
     (-> (codescene/run-delta-analysis-on-commits codescene-delta-analysis-url codescene-user codescene-password codescene-repository external-review-id
-                                                 codescene-coupling-threshold-percent commits http-timeout)
+                                                 codescene-coupling-threshold-percent commits http-timeout current-commit)
         (assoc :title (first commits) :commits commits))))
 
 (defn- analyze-results [config analysis-results]

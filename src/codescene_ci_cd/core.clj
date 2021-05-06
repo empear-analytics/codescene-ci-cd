@@ -1,14 +1,13 @@
 (ns codescene-ci-cd.core
   "Contains the entrypoint to the app, including argument parsing and validation"
-  (:require [clojure.string :as string]
-            [clojure.tools.cli :as cli]
+  (:require [clojure.tools.cli :as cli]
             [codescene-ci-cd.delta-analysis :as delta-analysis]
-            [codescene-ci-cd.results :as results]
             [codescene-ci-cd.merge-requests :as merge-requests]
             [clojure.java.io :as io]
             [clojure.data.json :as json]
             [taoensso.timbre :as log]
-            [codescene-ci-cd.utils :as utils])
+            [codescene-ci-cd.utils :as utils]
+            [clojure.string :as str])
   (:gen-class))
 
 (def ^:private cli-options
@@ -68,15 +67,15 @@
   (->> ["Usage: codescene-ci-cd [options]"
         "Options:"
         options-summary]
-       (string/join \newline)))
+       (str/join \newline)))
 
 (defn- error-msg [errors]
   (str "The following errors occurred while parsing your command:\n\n"
-       (string/join \newline errors)))
+       (str/join \newline errors)))
 
 (defn- validation-error-msg [errors]
   (str "The following validation errors occurred for your command:\n\n"
-       (string/join \newline errors)))
+       (str/join \newline errors)))
 
 (defn- exit [ok? msg]
   (log/info msg)
@@ -152,10 +151,10 @@
         (delta-analysis/analyze-individual-commits-for options))
       (when (and analyze-branch-diff (some? base-revision))
         (delta-analysis/analyze-work-on-branch-for options)))))
-
-(defn log-result [options results]
-  (println (results/as-text results options)))
-
+ 
+(defn log-result [results]
+  (let [text (->> results (map :result-as-text) (str/join \newline))]
+    (println text)))
 
 (defn run-analysis-and-handle-result [options]
   (try
@@ -173,7 +172,7 @@
       (when (:create-azure-comment options)
         (merge-requests/create-azure-comment options results))
       (when (:log-result options)
-        (log-result options results))
+        (log-result results))
       [success (if success "CodeScene delta analysis ok!" "CodeScene delta analysis detected problems!")])
     (catch Exception e
       [(:pass-on-failed-analysis options) (str "CodeScene-CI/CD couldn't perform the delta analysis:" (utils/ex->str e))])))

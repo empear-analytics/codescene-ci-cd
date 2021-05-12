@@ -1,6 +1,6 @@
 FROM alpine:latest
 # python, curl and jq added only to be available for use in the surrounding build context
-RUN apk --update add openjdk8-jre git 
+RUN apk --update add openjdk8-jre git python3 curl jq
 
 ENV PATH /opt/codescene-ci-cd:$PATH
 

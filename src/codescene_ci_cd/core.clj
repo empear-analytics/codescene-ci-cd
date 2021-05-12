@@ -33,8 +33,8 @@
    [nil "--coupling-threshold-percent THRESHOLD" "Temporal Coupling Threshold (in percent)" :default 75 :parse-fn #(Integer/parseInt %)]
    [nil "--risk-threshold THRESHOLD" "Risk Threshold" :default 9 :parse-fn #(Integer/parseInt %)]
    [nil "--previous-commit SHA" "Previous Commit Id"]
-   [nil "--current-commit SHA" "Current Commit Id"]
-   [nil "--base-revision SHA" "Base Revision Id"]
+   [nil "--current-commit SHA/refname" "Current Commit Id"]
+   [nil "--base-revision SHA/refname" "Base Revision Id"]
    [nil "--external-review-id ID" "External Review Id"]
    ;; GitLab settings
    [nil "--gitlab-api-url URL" "GitLab API URL"]
@@ -153,7 +153,7 @@
         (delta-analysis/analyze-work-on-branch-for options)))))
  
 (defn log-result [results]
-  (let [text (->> results (map :result-as-text) (str/join \newline))]
+  (let [text (->> results (map #(get-in % [:result :result-as-text])) (str/join \newline))]
     (println text)))
 
 (defn run-analysis-and-handle-result [options]

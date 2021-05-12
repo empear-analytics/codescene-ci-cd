@@ -8,8 +8,7 @@
             [clojure.string :as str]))
 
 (defn- as-markdown [results]
-  ;; TODO: Add a title
-  (->> results (map :result-as-markdown) (str/join \newline)))
+  (->> results (map #(get-in % [:result :result-as-markdown])) (str/join \newline)))
 
 (defn create-gitlab-note [options results]
   (log/info "Create GitLab Note for merge request...")

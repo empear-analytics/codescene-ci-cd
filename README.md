@@ -79,8 +79,8 @@ Options:
         --coupling-threshold-percent THRESHOLD  75  Temporal Coupling Threshold (in percent)
         --risk-threshold THRESHOLD              9   Risk Threshold
         --previous-commit SHA                       Previous Commit Id
-        --current-commit SHA                        Current Commit Id
-        --base-revision SHA                         Base Revision Id
+        --current-commit SHA/refname                Current Commit Id
+        --base-revision SHA/refname                 Base Revision Id
         --external-review-id ID                     External Review Id
         --gitlab-api-url URL                        GitLab API URL
         --gitlab-api-token TOKEN                    GitLab API Token

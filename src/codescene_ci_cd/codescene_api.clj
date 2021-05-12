@@ -3,14 +3,14 @@
   (:require [clj-http.client :as http]))
 
 (defn run-delta-analysis-on-commits [delta-analysis-url user password repository external-review-id
-                                     coupling-threshold-percent commits timeout current-commit]
+                                     coupling-threshold-percent commits timeout]
   (-> (http/post delta-analysis-url
                  {:basic-auth     [user password]
                   :content-type   :json
                   :form-params    {:commits                    commits
                                    :repository                 repository
                                    :external_review_id         external-review-id
-                                   :delta_branch_head          current-commit
+                                   :delta_branch_head          (last commits)
                                    :coupling_threshold_percent coupling-threshold-percent
                                    :use_biomarkers             true}
                   :as             :json

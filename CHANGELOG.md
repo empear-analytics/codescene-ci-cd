@@ -17,6 +17,10 @@ All notable changes to this project will be documented in this file. This change
 
 - Nothing.
 
+## 1.3.0 - 2021-05-14
+
+Now uses formatted results supplied by CodeScene. Note that this requires CodeScene 4.4.10 or newer.
+
 ## 1.2.0 - 2020-12-04
 
 No longer runnable as a service.

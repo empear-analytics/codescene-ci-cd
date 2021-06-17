@@ -61,48 +61,49 @@ Being a command line utility, _codescene-cd-cd_ takes numerous command line opti
 ```
 Usage: codescene-ci-cd [options]
 Options:
-    -h, --help
-        --codescene-delta-analysis-url URL          CodeScene Delta Analysis URL
-    -u, --codescene-user USER                       CodeScene User
-    -p, --codescene-password PWD                    CodeScene Password
-    -r, --codescene-repository REPO                 CodeScene Repository
-        --analyze-individual-commits                Individual Commits
-        --analyze-branch-diff                       By Branch
-        --pass-on-failed-analysis                   Pass Build on Failed Analysis
-        --fail-on-high-risk                         Fail Build on High Risk
-        --fail-on-failed-goal                       Fail Build on Failed Goals
-        --fail-on-declining-code-health             Fail Build on Code Health Decline
-        --create-gitlab-note                        Create Note For Gitlab Merge Request
-        --create-github-comment                     Create Comment For GitHub Pull Request
-        --create-bitbucket-comment                  Create Comment For Bitbucket Pull Request
-        --[no-]log-result                           Log the result (by printing)
-        --coupling-threshold-percent THRESHOLD  75  Temporal Coupling Threshold (in percent)
-        --risk-threshold THRESHOLD              9   Risk Threshold
-        --previous-commit SHA                       Previous Commit Id
-        --current-commit SHA/refname                Current Commit Id
-        --base-revision SHA/refname                 Base Revision Id
-        --external-review-id ID                     External Review Id
-        --gitlab-api-url URL                        GitLab API URL
-        --gitlab-api-token TOKEN                    GitLab API Token
-        --gitlab-project-id ID                      GitLab Project ID
-        --gitlab-merge-request-iid IID              GitLab Merge Request IID
-        --github-api-url URL                        GitHub API URL
-        --github-api-token TOKEN                    GitHub API Token
-        --github-owner OWNER                        GitHub Repository Owner
-        --github-repo REPO                          GitHub Repository Name
-        --github-pull-request-id ID                 GitHub Pull Request ID
-        --bitbucket-api-url URL                     BitBucket API URL
-        --bitbucket-user USER                       BitBucket User
-        --bitbucket-password PASSWORD               BitBucket Password
-        --bitbucket-repo REPO                       BitBucket Repository Name
-        --bitbucket-pull-request-id ID              BitBucket Pull Request ID
-        --azure-api-url URL                         Azure API URL
-        --azure-api-token                           Azure API Token
-        --azure-project                             Azure Project Name
-        --azure-repo                                Azure Repository Name
-        --azure-pull-request-id                     Azure Pull Request ID
-        --result-path FILENAME                      Path where JSON output is generated
-        --http-timeout TIMEOUT-MS                   Timeout for http API calls
+  -h, --help
+      --codescene-delta-analysis-url URL          CodeScene Delta Analysis URL
+  -u, --codescene-user USER                       CodeScene User
+  -p, --codescene-password PWD                    CodeScene Password
+  -r, --codescene-repository REPO                 CodeScene Repository
+      --analyze-individual-commits                Individual Commits
+      --analyze-branch-diff                       By Branch
+      --pass-on-failed-analysis                   Pass Build on Failed Analysis
+      --fail-on-high-risk                         Fail Build on High Risk
+      --fail-on-failed-goal                       Fail Build on Failed Goals
+      --fail-on-declining-code-health             Fail Build on Code Health Decline
+      --create-gitlab-note                        Create Note For Gitlab Merge Request
+      --create-github-comment                     Create Comment For GitHub Pull Request
+      --create-bitbucket-comment                  Create Comment For Bitbucket Pull Request
+      --create-azure-comment                      Create Comment For Azure Pull Request
+      --[no-]log-result                           Log the result (by printing)
+      --coupling-threshold-percent THRESHOLD  75  Temporal Coupling Threshold (in percent)
+      --risk-threshold THRESHOLD              9   Risk Threshold
+      --previous-commit SHA                       Previous Commit Id
+      --current-commit SHA/refname                Current Commit Id
+      --base-revision SHA/refname                 Base Revision Id
+      --external-review-id ID                     External Review Id
+      --gitlab-api-url URL                        GitLab API URL
+      --gitlab-api-token TOKEN                    GitLab API Token
+      --gitlab-project-id ID                      GitLab Project ID
+      --gitlab-merge-request-iid IID              GitLab Merge Request IID
+      --github-api-url URL                        GitHub API URL
+      --github-api-token TOKEN                    GitHub API Token
+      --github-owner OWNER                        GitHub Repository Owner
+      --github-repo REPO                          GitHub Repository Name
+      --github-pull-request-id ID                 GitHub Pull Request ID
+      --bitbucket-api-url URL                     BitBucket API URL
+      --bitbucket-user USER                       BitBucket User
+      --bitbucket-password PASSWORD               BitBucket Password
+      --bitbucket-repo REPO                       BitBucket Repository Name
+      --bitbucket-pull-request-id ID              BitBucket Pull Request ID
+      --azure-api-url URL                         Azure API URL
+      --azure-api-token TOKEN                     Azure API Token
+      --azure-project PROJECT                     Azure Project Name
+      --azure-repo REPO                           Azure Repository Name
+      --azure-pull-request-id ID                  Azure Pull Request ID
+      --result-path FILENAME                      Path where JSON output is generated
+      --http-timeout TIMEOUT-MS                   Timeout for http API calls
 ```
 In a typical build environment, most of these options are common to all projects, and are thus best defined as variables set in the CI/CD-system, see examples below.
 

@@ -1,19 +1,55 @@
 (ns codescene-ci-cd.azure-api
   "Wraps the bitbucket http API"
-  (:require [clj-http.client :as http]
-            [clojure.data.json :as json]))
+  (:require [clj-http.client :as http]))
 
 (defn- threads-url [api-url project repo pull-request-id]
   (format "%s/%s/_apis/git/repositories/%s/pullrequests/%s/threads" api-url project repo pull-request-id))
 
+(defn- get-data
+  ([url api-token timeout]
+   (get-data url api-token {} timeout))
+  ([url api-token query-params timeout]
+   (let [result (http/get url
+                          {:basic-auth        ["" api-token]
+                           :query-params      query-params
+                           :content-type      :json
+                           :accept            :json
+                           :as                :json-strict
+                           :conn-timeout      timeout
+                           :socket-timeout    timeout})]
+     (:body result))))
+
+(defn- post-data
+  ([url api-token form-params timeout]
+   (post-data url api-token form-params {} timeout))
+  ([url api-token form-params query-params timeout]
+  (let [result (http/post url
+                          {:basic-auth        ["" api-token]
+                           :query-params      query-params
+                           :form-params       form-params
+                           :content-type      :json
+                           :accept            :json
+                           :as                :json-strict
+                           :conn-timeout      timeout
+                           :socket-timeout    timeout})]
+    (:body result))))
+
+(defn- delete
+  [url api-token query-params timeout]
+  (let [result (http/delete url
+                            {:basic-auth        ["" api-token]
+                             :query-params      query-params
+                             :content-type      :json
+                             :accept            :json
+                             :as                :json-strict
+                             :conn-timeout      timeout
+                             :socket-timeout    timeout})]
+    (:body result)))
+
 (defn get-commits
   "Returns a list commits (maps)"
   [commits-url api-token timeout]
-  (:body (http/get commits-url
-                   {:basic-auth     ["" api-token]
-                    :as             :json-strict
-                    :socket-timeout timeout
-                    :conn-timeout   timeout})))
+  (get-data commits-url api-token timeout))
 
 (defn get-commit-ids
   "Returns a list of commit ids"
@@ -26,34 +62,25 @@
   "Returns tuples [content, url]"
   [api-url api-token project repo pull-request-id timeout]
   (let [threads-url (threads-url api-url project repo pull-request-id)]
-    (->> (:body (http/get threads-url
-                         {:basic-auth     ["" api-token]
-                          :as             :json-strict
-                          :socket-timeout timeout
-                          :conn-timeout   timeout}))
-        :value
-        (mapcat :comments)
-        (filter #(some? (:content %)))
-        (map (fn [x] [(:content x) (get-in x [:_links :self :href])])))))
+    (->> (get-data threads-url  api-token timeout)
+         :value
+         (mapcat :comments)
+         (filter #(some? (:content %)))
+         (map (fn [x] [(:content x) (get-in x [:_links :self :href])])))))
 
 (defn delete-comment 
   "Deletes a comment, returns true if succesful"
   [comment-url api-token timeout]
-  (http/delete comment-url
-               {:basic-auth     ["" api-token]
-                :content-type :json
-                :socket-timeout timeout
-                :conn-timeout   timeout})
+  (delete comment-url api-token {:api-version "5.0"} timeout)
   true)
 
 (defn create-comment [threads-url api-token text timeout]
-  (->> (:body (http/post threads-url
-                           {:basic-auth     ["" api-token]
-                            :body           (json/write-str {:comments [{:content text}]})
-                            :content-type :json
-                            :socket-timeout timeout
-                            :conn-timeout   timeout}))
-         :id))
+  (->> (post-data threads-url api-token
+                  {:comments [{:content text}]
+                   :status 1}
+                  {:api-version "5.0"}
+                  timeout)
+       :id))
 
 (defn create-pull-request-comment
   "Creates comment thread and returns the comment thread id"

@@ -17,6 +17,10 @@ All notable changes to this project will be documented in this file. This change
 
 - Nothing.
 
+## 1.3.1 - 2021-06-24
+
+Update Azure commenting to specify API version
+
 ## 1.3.0 - 2021-05-14
 
 Now uses formatted results supplied by CodeScene. Note that this requires CodeScene 4.4.10 or newer.

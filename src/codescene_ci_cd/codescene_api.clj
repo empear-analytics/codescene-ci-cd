@@ -11,8 +11,7 @@
                                    :repository                 repository
                                    :external_review_id         external-review-id
                                    :delta_branch_head          (last commits)
-                                   :coupling_threshold_percent coupling-threshold-percent
-                                   :use_biomarkers             true}
+                                   :coupling_threshold_percent coupling-threshold-percent}
                   :as             :json
                   :socket-timeout timeout
                   :conn-timeout   timeout})

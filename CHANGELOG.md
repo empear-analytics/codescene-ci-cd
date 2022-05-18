@@ -16,6 +16,13 @@ All notable changes to this project will be documented in this file. This change
 ## [Unreleased]
 
 - Nothing.
+## 1.3.3 - 2022-05-18
+
+Specify target ref in CodeScene API call.
+
+## 1.3.2 - 2021-10-26
+
+Remove redundant biomarkers option
 
 ## 1.3.1 - 2021-06-24
 

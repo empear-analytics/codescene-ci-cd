@@ -1,6 +1,9 @@
-# codescene-ci-cd
+# THIS REPOSITORY HAS BEEN DEPRECATED
 
-[![Build Status](https://travis-ci.com/empear-analytics/codescene-ci-cd.svg?token=gTqzdonbaDKuiPKD7tHp&branch=master)](https://travis-ci.com/empear-analytics/codescene-ci-cd)
+The API used by this this plugin will not be supported by CodeScene after version 7.0.5.
+Rather than using it, we recommend to use the functionality built into CodeScene to [integrate automated code reviews in Pull Requests](https://docs.enterprise.codescene.io/latest/guides/pr-integration/integrate-into-ci-cd.html#), or to use the [CodeScene CLI tool](https://docs.enterprise.codescene.io/latest/cli/index.html) 
+
+# codescene-ci-cd
 
 A bridge application for integrating
 [CodeScene](https://empear.com/how-it-works/) by Empear into CI/CD build pipelines
